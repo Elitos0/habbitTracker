@@ -1,0 +1,70 @@
+- generic [ref=e509]:
+  - generic:
+    - generic:
+      - generic:
+        - link "(tabs), back" [ref=e511] [cursor=pointer]:
+          - /url: /
+        - heading "Привычка" [level=1] [ref=e514]
+  - generic [ref=e518]:
+    - generic [ref=e521]:
+      - generic [ref=e522]: Лекарство
+      - generic [ref=e525]: Здоровье
+    - generic [ref=e526]:
+      - generic [ref=e527]: Сегодня
+      - generic [ref=e528]:
+        - generic [ref=e529] [cursor=pointer]:
+          - generic [ref=e530]: 
+          - generic [ref=e531]: Утро
+          - generic [ref=e532]: "*"
+        - generic [ref=e533] [cursor=pointer]:
+          - generic [ref=e534]: 
+          - generic [ref=e535]: День
+          - generic [ref=e536]: "*"
+        - generic [active] [ref=e537] [cursor=pointer]:
+          - generic [ref=e538]: 
+          - generic [ref=e539]: Вечер
+          - generic [ref=e540]: "*"
+    - generic [ref=e541]:
+      - generic [ref=e542]:
+        - generic [ref=e544] [cursor=pointer]: 
+        - generic [ref=e545]: апрель 2026
+        - generic [ref=e547] [cursor=pointer]: 
+      - generic [ref=e548]:
+        - generic [ref=e549]: Пн
+        - generic [ref=e550]: Вт
+        - generic [ref=e551]: Ср
+        - generic [ref=e552]: Чт
+        - generic [ref=e553]: Пт
+        - generic [ref=e554]: Сб
+        - generic [ref=e555]: Вс
+      - generic [ref=e556]:
+        - generic [ref=e560]: "1"
+        - generic [ref=e562]: "2"
+        - generic [ref=e564]: "3"
+        - generic [ref=e566]: "4"
+        - generic [ref=e568]: "5"
+        - generic [ref=e570]: "6"
+        - generic [ref=e572]: "7"
+        - generic [ref=e574]: "8"
+        - generic [ref=e576]: "9"
+        - generic [ref=e578]: "10"
+        - generic [ref=e580]: "11"
+        - generic [ref=e582]: "12"
+        - generic [ref=e584]: "13"
+        - generic [ref=e586]: "14"
+        - generic [ref=e588]: "15"
+        - generic [ref=e590]: "16"
+        - generic [ref=e592]: "17"
+        - generic [ref=e594]: "18"
+        - generic [ref=e596]: "19"
+        - generic [ref=e598]: "20"
+        - generic [ref=e600]: "21"
+        - generic [ref=e602]: "22"
+        - generic [ref=e604]: "23"
+        - generic [ref=e606]: "24"
+        - generic [ref=e608]: "25"
+        - generic [ref=e610]: "26"
+        - generic [ref=e612]: "27"
+        - generic [ref=e614]: "28"
+        - generic [ref=e616]: "29"
+        - generic [ref=e618]: "30"

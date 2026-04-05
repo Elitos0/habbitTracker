@@ -1,0 +1,105 @@
+- generic [ref=e60]:
+  - generic [ref=e61]:
+    - generic [ref=e63]:
+      - heading "Привычки" [level=1] [ref=e507]
+      - generic [ref=e67]:
+        - generic [ref=e69]:
+          - generic [ref=e266] [cursor=pointer]:
+            - generic [ref=e267]:
+              - generic [ref=e268]: Лекарство
+              - generic [ref=e271]: Здоровье
+            - generic [ref=e273]: 
+          - generic [ref=e176] [cursor=pointer]:
+            - generic [ref=e177]:
+              - generic [ref=e178]: Бег
+              - generic [ref=e181]: Спорт
+            - generic [ref=e183]: 
+        - generic [ref=e75] [cursor=pointer]: 
+    - generic [ref=e390]:
+      - heading [level=1] [ref=e477]: Календарь
+      - generic [ref=e395]:
+        - generic [ref=e396]:
+          - generic [ref=e398] [cursor=pointer]: 
+          - generic [ref=e399]: апрель 2026
+          - generic [ref=e401] [cursor=pointer]: 
+        - generic [ref=e402]:
+          - generic [ref=e403]: Пн
+          - generic [ref=e404]: Вт
+          - generic [ref=e405]: Ср
+          - generic [ref=e406]: Чт
+          - generic [ref=e407]: Пт
+          - generic [ref=e408]: Сб
+          - generic [ref=e409]: Вс
+        - generic [ref=e410]:
+          - generic [ref=e414]: "1"
+          - generic [ref=e416]: "2"
+          - generic [ref=e418]: "3"
+          - generic [ref=e420]: "4"
+          - generic [ref=e422]: "5"
+          - generic [ref=e427]: "6"
+          - generic [ref=e429]: "7"
+          - generic [ref=e431]: "8"
+          - generic [ref=e433]: "9"
+          - generic [ref=e435]: "10"
+          - generic [ref=e437]: "11"
+          - generic [ref=e439]: "12"
+          - generic [ref=e441]: "13"
+          - generic [ref=e443]: "14"
+          - generic [ref=e445]: "15"
+          - generic [ref=e447]: "16"
+          - generic [ref=e449]: "17"
+          - generic [ref=e451]: "18"
+          - generic [ref=e453]: "19"
+          - generic [ref=e455]: "20"
+          - generic [ref=e457]: "21"
+          - generic [ref=e459]: "22"
+          - generic [ref=e461]: "23"
+          - generic [ref=e463]: "24"
+          - generic [ref=e465]: "25"
+          - generic [ref=e467]: "26"
+          - generic [ref=e469]: "27"
+          - generic [ref=e471]: "28"
+          - generic [ref=e473]: "29"
+          - generic [ref=e475]: "30"
+    - generic [ref=e479]:
+      - heading [level=1] [ref=e508]: Статистика
+      - generic [ref=e484]:
+        - generic [ref=e485]: Сегодня
+        - generic [ref=e486]:
+          - generic [ref=e487]:
+            - generic [ref=e488]: "2"
+            - generic [ref=e489]: Всего
+          - generic [ref=e490]:
+            - generic [ref=e491]: "1"
+            - generic [ref=e492]: Выполнено
+          - generic [ref=e493]:
+            - generic [ref=e494]: "1"
+            - generic [ref=e495]: Частично
+        - generic [ref=e496]: По привычкам
+        - generic [ref=e499]:
+          - generic [ref=e500]: Лекарство
+          - generic [ref=e501]: "Серия: 0 дн. · Выполнение: 0%"
+        - generic [ref=e504]:
+          - generic [ref=e505]: Бег
+          - generic [ref=e506]: "Серия: 1 дн. · Выполнение: 100%"
+  - tablist [ref=e77]:
+    - tab "  Привычки" [active] [selected] [ref=e79] [cursor=pointer]:
+      - generic [ref=e80]:
+        - generic [ref=e82]: 
+        - generic [ref=e84]: 
+      - generic [ref=e85]: Привычки
+    - tab "  Календарь" [ref=e87] [cursor=pointer]:
+      - generic [ref=e88]:
+        - generic [ref=e90]: 
+        - generic [ref=e92]: 
+      - generic [ref=e93]: Календарь
+    - tab "  Статистика" [ref=e95] [cursor=pointer]:
+      - generic [ref=e96]:
+        - generic [ref=e98]: 
+        - generic [ref=e100]: 
+      - generic [ref=e101]: Статистика
+    - tab "  Настройки" [ref=e103] [cursor=pointer]:
+      - generic [ref=e104]:
+        - generic [ref=e106]: 
+        - generic [ref=e108]: 
+      - generic [ref=e109]: Настройки

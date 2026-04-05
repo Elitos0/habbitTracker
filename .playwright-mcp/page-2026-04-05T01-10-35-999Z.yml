@@ -1,0 +1,52 @@
+- generic [ref=e60]:
+  - generic [ref=e63]:
+    - heading "Привычки" [level=1] [ref=e65]
+    - generic [ref=e67]:
+      - generic [ref=e68]:
+        - generic [ref=e70]:
+          - generic [ref=e72] [cursor=pointer]: Все
+          - generic [ref=e74] [cursor=pointer]: Сегодня
+          - generic [ref=e76] [cursor=pointer]: Неделя
+          - generic [ref=e78] [cursor=pointer]: Дата
+        - generic [ref=e230] [cursor=pointer]:
+          - generic [ref=e231]: 
+          - generic [ref=e232]: Выбрать дату
+          - generic [ref=e233]: 
+      - generic [ref=e205]:
+        - generic [ref=e206] [cursor=pointer]:
+          - generic [ref=e207]:
+            - generic [ref=e209]: Лекарство
+            - generic [ref=e212]: Здоровье
+          - generic [ref=e213]:
+            - generic [ref=e215]: 
+            - generic [ref=e217]: 
+        - generic [ref=e218]:
+          - generic [ref=e219] [cursor=pointer]:
+            - generic [ref=e228]: 
+            - generic [ref=e221]: Утро
+          - generic [ref=e222] [cursor=pointer]:
+            - generic [ref=e229]: 
+            - generic [ref=e224]: День
+          - generic [ref=e227] [cursor=pointer]: Вечер
+      - generic [ref=e85] [cursor=pointer]: 
+  - tablist [ref=e87]:
+    - tab "  Привычки" [selected] [ref=e89] [cursor=pointer]:
+      - generic [ref=e90]:
+        - generic [ref=e92]: 
+        - generic [ref=e94]: 
+      - generic [ref=e95]: Привычки
+    - tab "  Календарь" [ref=e97] [cursor=pointer]:
+      - generic [ref=e98]:
+        - generic [ref=e100]: 
+        - generic [ref=e102]: 
+      - generic [ref=e103]: Календарь
+    - tab "  Статистика" [ref=e105] [cursor=pointer]:
+      - generic [ref=e106]:
+        - generic [ref=e108]: 
+        - generic [ref=e110]: 
+      - generic [ref=e111]: Статистика
+    - tab "  Настройки" [ref=e113] [cursor=pointer]:
+      - generic [ref=e114]:
+        - generic [ref=e116]: 
+        - generic [ref=e118]: 
+      - generic [ref=e119]: Настройки

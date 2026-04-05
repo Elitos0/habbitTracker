@@ -1,0 +1,37 @@
+- generic [ref=e60]:
+  - generic [ref=e63]:
+    - heading "Привычки" [level=1] [ref=e65]
+    - generic [ref=e67]:
+      - generic [ref=e69]:
+        - generic [ref=e266] [cursor=pointer]:
+          - generic [ref=e267]:
+            - generic [ref=e268]: Лекарство
+            - generic [ref=e271]: Здоровье
+          - generic [ref=e273]: 
+        - generic [ref=e176] [cursor=pointer]:
+          - generic [ref=e177]:
+            - generic [ref=e178]: Бег
+            - generic [ref=e181]: Спорт
+          - generic [ref=e183]: 
+      - generic [ref=e75] [cursor=pointer]: 
+  - tablist [ref=e77]:
+    - tab "  Привычки" [selected] [ref=e79] [cursor=pointer]:
+      - generic [ref=e80]:
+        - generic [ref=e82]: 
+        - generic [ref=e84]: 
+      - generic [ref=e85]: Привычки
+    - tab "  Календарь" [ref=e87] [cursor=pointer]:
+      - generic [ref=e88]:
+        - generic [ref=e90]: 
+        - generic [ref=e92]: 
+      - generic [ref=e93]: Календарь
+    - tab "  Статистика" [ref=e95] [cursor=pointer]:
+      - generic [ref=e96]:
+        - generic [ref=e98]: 
+        - generic [ref=e100]: 
+      - generic [ref=e101]: Статистика
+    - tab "  Настройки" [ref=e103] [cursor=pointer]:
+      - generic [ref=e104]:
+        - generic [ref=e106]: 
+        - generic [ref=e108]: 
+      - generic [ref=e109]: Настройки

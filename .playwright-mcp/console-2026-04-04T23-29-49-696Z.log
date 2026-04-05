@@ -1,0 +1,36 @@
+[     865ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:131884
+[     900ms] [LOG] Running application "main" with appParams:
+ {rootTag: #root, hydrate: undefined} 
+Development-level warnings: ON.
+Performance optimizations: OFF. @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:39636
+[     915ms] [WARNING] "shadow*" style props are deprecated. Use "boxShadow". @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:7236
+[     989ms] [WARNING] props.pointerEvents is deprecated. Use style.pointerEvents @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:7236
+[    1189ms] [ERROR] cannot create file @ http://localhost:8081/node_modules/expo-sqlite/web/worker.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app&modulesOnly=false&runModule=true:1864
+[    1199ms] Error: Error: Error code 14: unable to open database file
+    at workerMessageHandler (http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:70527:27)
+    at Worker.<anonymous> (http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:70082:49)
+[   54513ms] [ERROR] cannot create file @ http://localhost:8081/node_modules/expo-sqlite/web/worker.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app&modulesOnly=false&runModule=true:1864
+[   54514ms] [WARNING] [DB] OPFS open failed, falling back to in-memory DB: Error: Error: Error code 14: unable to open database file
+    at workerMessageHandler (http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:70527:27)
+    at Worker.<anonymous> (http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:70082:49) @ http://localhost:8081/src/lib/db/database.bundle//&platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app&minify=false&modulesOnly=true&runModule=false&shallow=true:57
+[  101201ms] [ERROR] WebSocket connection to 'ws://localhost:8081/hot' failed:  @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:54642
+[  101201ms] [ERROR] WebSocket connection to 'ws://localhost:8081/message' failed:  @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:56316
+[  101705ms] [WARNING] Cannot connect to Metro.
+ 
+ Try the following to fix the issue:
+ - Ensure the Metro dev server is running and available on the same network as this device
+ 
+ URL: localhost:8081
+ 
+ Error: undefined @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:54565
+[  108436ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:17360
+[  108470ms] [LOG] Running application "main" with appParams:
+ {rootTag: #root, hydrate: undefined} 
+Development-level warnings: ON.
+Performance optimizations: OFF. @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:70001
+[  108483ms] [WARNING] "shadow*" style props are deprecated. Use "boxShadow". @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:23682
+[  108545ms] [WARNING] props.pointerEvents is deprecated. Use style.pointerEvents @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:23682
+[  109187ms] [ERROR] cannot create file @ http://localhost:8081/node_modules/expo-sqlite/web/worker.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app&modulesOnly=false&runModule=true:1864
+[  109188ms] [WARNING] [DB] OPFS open failed, falling back to in-memory DB: Error: Error: Error code 14: unable to open database file
+    at workerMessageHandler (http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:92204:27)
+    at Worker.<anonymous> (http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:91759:49) @ http://localhost:8081/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app:90922

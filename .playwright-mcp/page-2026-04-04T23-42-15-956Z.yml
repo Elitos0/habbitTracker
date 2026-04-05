@@ -1,0 +1,47 @@
+- generic [ref=e63]:
+  - generic:
+    - generic:
+      - generic:
+        - link "(tabs), back" [ref=e65] [cursor=pointer]:
+          - /url: /
+        - heading "Новая привычка" [level=1] [ref=e68]
+  - generic [ref=e72]:
+    - generic [ref=e73]: Название
+    - 'textbox "Например: Выпить воду" [ref=e74]': Лекарство
+    - generic [ref=e75]: Описание
+    - textbox "Необязательно" [ref=e76]
+    - generic [ref=e77]: Цвет
+    - generic [ref=e84] [cursor=pointer]: 
+    - generic [ref=e94]: Теги
+    - generic [ref=e95]:
+      - generic [ref=e97] [cursor=pointer]: Здоровье
+      - generic [ref=e99] [cursor=pointer]: Отдых
+      - generic [ref=e101] [cursor=pointer]: Работа
+      - generic [ref=e103] [cursor=pointer]: Спорт
+      - generic [ref=e105] [cursor=pointer]: Учёба
+    - generic [ref=e106]:
+      - textbox "Новый тег..." [ref=e107]
+      - generic [ref=e109] [cursor=pointer]: 
+    - generic [ref=e110]: Расписание
+    - generic [ref=e111]:
+      - generic [ref=e113] [cursor=pointer]: Каждый день
+      - generic [ref=e115] [cursor=pointer]: По дням недели
+      - generic [ref=e117] [cursor=pointer]: Каждые N дней
+      - generic [ref=e119] [cursor=pointer]: Несколько раз в день
+    - generic [ref=e120]:
+      - generic [ref=e121]: Подпункты
+      - switch [checked] [active] [ref=e125] [cursor=pointer]
+    - generic [ref=e128]:
+      - generic [ref=e129]:
+        - textbox "Пункт 1" [ref=e130]: Утро
+        - generic [ref=e132] [cursor=pointer]: 
+      - generic [ref=e133]:
+        - textbox "Пункт 2" [ref=e134]: День
+        - generic [ref=e136] [cursor=pointer]: 
+      - generic [ref=e137]:
+        - textbox "Пункт 3" [ref=e138]: Вечер
+        - generic [ref=e140] [cursor=pointer]: 
+      - generic [ref=e141] [cursor=pointer]:
+        - generic [ref=e142]: 
+        - generic [ref=e143]: Добавить пункт
+    - generic [ref=e126] [cursor=pointer]: Сохранить привычку

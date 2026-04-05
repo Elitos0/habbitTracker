@@ -1,0 +1,118 @@
+- generic [ref=e60]:
+  - generic [ref=e61]:
+    - generic [ref=e63]:
+      - heading [level=1] [ref=e110]: Привычки
+      - generic [ref=e67]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: 
+          - generic [ref=e72]: Пока нет привычек
+          - generic [ref=e73]: Нажмите + чтобы создать первую
+        - generic [ref=e75] [cursor=pointer]: 
+    - generic [ref=e112]:
+      - heading [level=1] [ref=e195]: Календарь
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e120] [cursor=pointer]: 
+          - generic [ref=e121]: апрель 2026
+          - generic [ref=e123] [cursor=pointer]: 
+        - generic [ref=e124]:
+          - generic [ref=e125]: Пн
+          - generic [ref=e126]: Вт
+          - generic [ref=e127]: Ср
+          - generic [ref=e128]: Чт
+          - generic [ref=e129]: Пт
+          - generic [ref=e130]: Сб
+          - generic [ref=e131]: Вс
+        - generic [ref=e132]:
+          - generic [ref=e136]: "1"
+          - generic [ref=e138]: "2"
+          - generic [ref=e140]: "3"
+          - generic [ref=e142]: "4"
+          - generic [ref=e144]: "5"
+          - generic [ref=e146]: "6"
+          - generic [ref=e148]: "7"
+          - generic [ref=e150]: "8"
+          - generic [ref=e152]: "9"
+          - generic [ref=e154]: "10"
+          - generic [ref=e156]: "11"
+          - generic [ref=e158]: "12"
+          - generic [ref=e160]: "13"
+          - generic [ref=e162]: "14"
+          - generic [ref=e164]: "15"
+          - generic [ref=e166]: "16"
+          - generic [ref=e168]: "17"
+          - generic [ref=e170]: "18"
+          - generic [ref=e172]: "19"
+          - generic [ref=e174]: "20"
+          - generic [ref=e176]: "21"
+          - generic [ref=e178]: "22"
+          - generic [ref=e180]: "23"
+          - generic [ref=e182]: "24"
+          - generic [ref=e184]: "25"
+          - generic [ref=e186]: "26"
+          - generic [ref=e188]: "27"
+          - generic [ref=e190]: "28"
+          - generic [ref=e192]: "29"
+          - generic [ref=e194]: "30"
+    - generic [ref=e197]:
+      - heading [level=1] [ref=e216]: Статистика
+      - generic [ref=e202]:
+        - generic [ref=e203]: Сегодня
+        - generic [ref=e204]:
+          - generic [ref=e205]:
+            - generic [ref=e206]: "0"
+            - generic [ref=e207]: Всего
+          - generic [ref=e208]:
+            - generic [ref=e209]: "0"
+            - generic [ref=e210]: Выполнено
+          - generic [ref=e211]:
+            - generic [ref=e212]: "0"
+            - generic [ref=e213]: Частично
+        - generic [ref=e214]: По привычкам
+        - generic [ref=e215]: Добавьте привычки, чтобы видеть статистику
+    - generic [ref=e218]:
+      - heading "Настройки" [level=1] [ref=e220]
+      - generic [ref=e223]:
+        - generic [ref=e224]:
+          - generic [ref=e225]: Данные
+          - generic [ref=e226]:
+            - generic [ref=e227] [cursor=pointer]:
+              - generic [ref=e228]: 
+              - generic [ref=e229]: Экспорт данных
+              - generic [ref=e230]: 
+            - generic [ref=e231] [cursor=pointer]:
+              - generic [ref=e232]: 
+              - generic [ref=e233]: Импорт данных
+              - generic [ref=e234]: 
+        - generic [ref=e235]:
+          - generic [ref=e236]: Уведомления
+          - generic [ref=e238] [cursor=pointer]:
+            - generic [ref=e239]: 
+            - generic [ref=e240]: Настройка напоминаний
+            - generic [ref=e241]: 
+        - generic [ref=e242]:
+          - generic [ref=e243]: О приложении
+          - generic [ref=e245]:
+            - generic [ref=e246]: Версия
+            - generic [ref=e247]: 1.0.0
+  - tablist [ref=e77]:
+    - tab "  Привычки" [ref=e79] [cursor=pointer]:
+      - generic [ref=e80]:
+        - generic [ref=e82]: 
+        - generic [ref=e84]: 
+      - generic [ref=e85]: Привычки
+    - tab "  Календарь" [ref=e87] [cursor=pointer]:
+      - generic [ref=e88]:
+        - generic [ref=e90]: 
+        - generic [ref=e92]: 
+      - generic [ref=e93]: Календарь
+    - tab "  Статистика" [ref=e95] [cursor=pointer]:
+      - generic [ref=e96]:
+        - generic [ref=e98]: 
+        - generic [ref=e100]: 
+      - generic [ref=e101]: Статистика
+    - tab "  Настройки" [active] [selected] [ref=e103] [cursor=pointer]:
+      - generic [ref=e104]:
+        - generic [ref=e106]: 
+        - generic [ref=e108]: 
+      - generic [ref=e109]: Настройки

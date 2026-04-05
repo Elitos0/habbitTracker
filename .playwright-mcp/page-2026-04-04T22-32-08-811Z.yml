@@ -1,0 +1,60 @@
+- generic [ref=e331]:
+  - generic:
+    - generic:
+      - generic:
+        - link "(tabs), back" [ref=e333] [cursor=pointer]:
+          - /url: /
+        - heading "Привычка" [level=1] [ref=e336]
+  - generic [ref=e340]:
+    - generic [ref=e343]:
+      - generic [ref=e344]: Выпить воду
+      - generic [ref=e347]: Здоровье
+    - generic [ref=e348]:
+      - generic [ref=e349]: Сегодня
+      - generic [ref=e350] [cursor=pointer]:
+        - generic [ref=e351]: 
+        - generic [ref=e352]: Выполнено
+    - generic [ref=e353]:
+      - generic [ref=e354]:
+        - generic [ref=e356] [cursor=pointer]: 
+        - generic [ref=e357]: апрель 2026
+        - generic [ref=e359] [cursor=pointer]: 
+      - generic [ref=e360]:
+        - generic [ref=e361]: Пн
+        - generic [ref=e362]: Вт
+        - generic [ref=e363]: Ср
+        - generic [ref=e364]: Чт
+        - generic [ref=e365]: Пт
+        - generic [ref=e366]: Сб
+        - generic [ref=e367]: Вс
+      - generic [ref=e368]:
+        - generic [ref=e372]: "1"
+        - generic [ref=e374]: "2"
+        - generic [ref=e376]: "3"
+        - generic [ref=e378]: "4"
+        - generic [ref=e380]: "5"
+        - generic [ref=e382]: "6"
+        - generic [ref=e384]: "7"
+        - generic [ref=e386]: "8"
+        - generic [ref=e388]: "9"
+        - generic [ref=e390]: "10"
+        - generic [ref=e392]: "11"
+        - generic [ref=e394]: "12"
+        - generic [ref=e396]: "13"
+        - generic [ref=e398]: "14"
+        - generic [ref=e400]: "15"
+        - generic [ref=e402]: "16"
+        - generic [ref=e404]: "17"
+        - generic [ref=e406]: "18"
+        - generic [ref=e408]: "19"
+        - generic [ref=e410]: "20"
+        - generic [ref=e412]: "21"
+        - generic [ref=e414]: "22"
+        - generic [ref=e416]: "23"
+        - generic [ref=e418]: "24"
+        - generic [ref=e420]: "25"
+        - generic [ref=e422]: "26"
+        - generic [ref=e424]: "27"
+        - generic [ref=e426]: "28"
+        - generic [ref=e428]: "29"
+        - generic [ref=e430]: "30"

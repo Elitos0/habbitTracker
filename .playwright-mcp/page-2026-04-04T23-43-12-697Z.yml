@@ -1,0 +1,55 @@
+- generic [ref=e8]:
+  - generic [ref=e9]:
+    - generic [ref=e11]:
+      - heading [level=1] [ref=e257]: Привычки
+      - generic [ref=e15]:
+        - generic [ref=e145] [cursor=pointer]:
+          - generic [ref=e147]: Лекарство
+          - generic [ref=e149]: 
+        - generic [ref=e62] [cursor=pointer]: 
+    - generic [ref=e259]:
+      - heading "Настройки" [level=1] [ref=e261]
+      - generic [ref=e264]:
+        - generic [ref=e265]:
+          - generic [ref=e266]: Данные
+          - generic [ref=e267]:
+            - generic [ref=e268] [cursor=pointer]:
+              - generic [ref=e269]: 
+              - generic [ref=e270]: Экспорт данных
+              - generic [ref=e271]: 
+            - generic [ref=e272] [cursor=pointer]:
+              - generic [ref=e273]: 
+              - generic [ref=e274]: Импорт данных
+              - generic [ref=e275]: 
+        - generic [ref=e276]:
+          - generic [ref=e277]: Уведомления
+          - generic [ref=e279] [cursor=pointer]:
+            - generic [ref=e280]: 
+            - generic [ref=e281]: Настройка напоминаний
+            - generic [ref=e282]: 
+        - generic [ref=e283]:
+          - generic [ref=e284]: О приложении
+          - generic [ref=e286]:
+            - generic [ref=e287]: Версия
+            - generic [ref=e288]: 1.0.0
+  - tablist [ref=e22]:
+    - tab "  Привычки" [ref=e24] [cursor=pointer]:
+      - generic [ref=e25]:
+        - generic [ref=e27]: 
+        - generic [ref=e29]: 
+      - generic [ref=e30]: Привычки
+    - tab "  Календарь" [ref=e32] [cursor=pointer]:
+      - generic [ref=e33]:
+        - generic [ref=e35]: 
+        - generic [ref=e37]: 
+      - generic [ref=e38]: Календарь
+    - tab "  Статистика" [ref=e40] [cursor=pointer]:
+      - generic [ref=e41]:
+        - generic [ref=e43]: 
+        - generic [ref=e45]: 
+      - generic [ref=e46]: Статистика
+    - tab "  Настройки" [active] [selected] [ref=e48] [cursor=pointer]:
+      - generic [ref=e49]:
+        - generic [ref=e51]: 
+        - generic [ref=e53]: 
+      - generic [ref=e54]: Настройки

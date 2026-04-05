@@ -1,0 +1,30 @@
+- generic [ref=e124]:
+  - generic [ref=e127]:
+    - heading "Привычки" [level=1] [ref=e129]
+    - generic [ref=e131]:
+      - generic [ref=e134]:
+        - generic [ref=e135]: 
+        - generic [ref=e136]: Пока нет привычек
+        - generic [ref=e137]: Нажмите + чтобы создать первую
+      - generic [ref=e139] [cursor=pointer]: 
+  - tablist [ref=e141]:
+    - tab "  Привычки" [selected] [ref=e143] [cursor=pointer]:
+      - generic [ref=e144]:
+        - generic [ref=e146]: 
+        - generic [ref=e148]: 
+      - generic [ref=e149]: Привычки
+    - tab "  Календарь" [ref=e151] [cursor=pointer]:
+      - generic [ref=e152]:
+        - generic [ref=e154]: 
+        - generic [ref=e156]: 
+      - generic [ref=e157]: Календарь
+    - tab "  Статистика" [ref=e159] [cursor=pointer]:
+      - generic [ref=e160]:
+        - generic [ref=e162]: 
+        - generic [ref=e164]: 
+      - generic [ref=e165]: Статистика
+    - tab "  Настройки" [ref=e167] [cursor=pointer]:
+      - generic [ref=e168]:
+        - generic [ref=e170]: 
+        - generic [ref=e172]: 
+      - generic [ref=e173]: Настройки

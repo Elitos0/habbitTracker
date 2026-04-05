@@ -1,0 +1,8 @@
+- generic [ref=e5]:
+  - generic:
+    - generic:
+      - generic:
+        - link "(tabs), back" [ref=e7] [cursor=pointer]:
+          - /url: /?id=b9bf49ea-fa18-4de1-be7a-ac419a14a86f
+        - heading "Привычка" [level=1] [ref=e10]
+  - generic [ref=e14]: Привычка не найдена

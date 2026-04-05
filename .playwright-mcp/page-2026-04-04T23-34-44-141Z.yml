@@ -1,0 +1,34 @@
+- generic [ref=e184]:
+  - generic:
+    - generic:
+      - generic:
+        - link "(tabs), back" [ref=e186] [cursor=pointer]:
+          - /url: /
+        - heading "Новая привычка" [level=1] [ref=e189]
+  - generic [ref=e193]:
+    - generic [ref=e194]: Название
+    - 'textbox "Например: Выпить воду" [ref=e195]': Лекарство
+    - generic [ref=e196]: Описание
+    - textbox "Необязательно" [ref=e197]
+    - generic [ref=e198]: Цвет
+    - generic [ref=e205] [cursor=pointer]: 
+    - generic [ref=e215]: Теги
+    - generic [ref=e216]:
+      - generic [ref=e218] [cursor=pointer]: Здоровье
+      - generic [ref=e220] [cursor=pointer]: Отдых
+      - generic [ref=e222] [cursor=pointer]: Работа
+      - generic [ref=e224] [cursor=pointer]: Спорт
+      - generic [ref=e226] [cursor=pointer]: Учёба
+    - generic [ref=e227]:
+      - textbox "Новый тег..." [ref=e228]
+      - generic [ref=e230] [cursor=pointer]: 
+    - generic [ref=e231]: Расписание
+    - generic [ref=e232]:
+      - generic [ref=e234] [cursor=pointer]: Каждый день
+      - generic [ref=e236] [cursor=pointer]: По дням недели
+      - generic [ref=e238] [cursor=pointer]: Каждые N дней
+      - generic [ref=e240] [cursor=pointer]: Несколько раз в день
+    - generic [ref=e241]:
+      - generic [ref=e242]: Подпункты
+      - switch [ref=e246] [cursor=pointer]
+    - generic [ref=e247] [cursor=pointer]: Сохранить привычку

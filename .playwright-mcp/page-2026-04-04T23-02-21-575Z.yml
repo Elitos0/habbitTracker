@@ -1,0 +1,38 @@
+- generic [ref=e8]:
+  - generic [ref=e11]:
+    - heading "Статистика" [level=1] [ref=e13]
+    - generic [ref=e16]:
+      - generic [ref=e17]: Сегодня
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: "0"
+          - generic [ref=e21]: Всего
+        - generic [ref=e22]:
+          - generic [ref=e23]: "0"
+          - generic [ref=e24]: Выполнено
+        - generic [ref=e25]:
+          - generic [ref=e26]: "0"
+          - generic [ref=e27]: Частично
+      - generic [ref=e28]: По привычкам
+      - generic [ref=e29]: Добавьте привычки, чтобы видеть статистику
+  - tablist [ref=e31]:
+    - tab "  Привычки" [ref=e33] [cursor=pointer]:
+      - generic [ref=e34]:
+        - generic [ref=e36]: 
+        - generic [ref=e38]: 
+      - generic [ref=e39]: Привычки
+    - tab "  Календарь" [ref=e41] [cursor=pointer]:
+      - generic [ref=e42]:
+        - generic [ref=e44]: 
+        - generic [ref=e46]: 
+      - generic [ref=e47]: Календарь
+    - tab "  Статистика" [selected] [ref=e49] [cursor=pointer]:
+      - generic [ref=e50]:
+        - generic [ref=e52]: 
+        - generic [ref=e54]: 
+      - generic [ref=e55]: Статистика
+    - tab "  Настройки" [ref=e57] [cursor=pointer]:
+      - generic [ref=e58]:
+        - generic [ref=e60]: 
+        - generic [ref=e62]: 
+      - generic [ref=e63]: Настройки
