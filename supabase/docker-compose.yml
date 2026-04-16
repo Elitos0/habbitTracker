@@ -105,7 +105,10 @@ services:
     command:
       - -c
       - |
-        eval "echo \"$$(cat /var/lib/kong/kong.template.yml)\"" > /var/lib/kong/kong.yml
+        sed \
+          -e "s|\$${ANON_KEY}|$${ANON_KEY}|g" \
+          -e "s|\$${SERVICE_ROLE_KEY}|$${SERVICE_ROLE_KEY}|g" \
+          /var/lib/kong/kong.template.yml > /tmp/kong.yml
         exec /docker-entrypoint.sh kong docker-start
     depends_on:
       - auth
@@ -113,7 +116,7 @@ services:
       - realtime
     environment:
       KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DECLARATIVE_CONFIG: /tmp/kong.yml
       KONG_DNS_ORDER: LAST,A,CNAME
       KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
       KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
