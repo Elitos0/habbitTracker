@@ -2,7 +2,7 @@ _format_version: "3.0"
 
 services:
   - name: auth-v1
-    url: http://auth:9999/
+    url: http://supabase-auth:9999/
     routes:
       - name: auth-v1-route
         strip_path: true
@@ -12,7 +12,7 @@ services:
       - name: cors
 
   - name: rest-v1
-    url: http://rest:3000/
+    url: http://supabase-rest:3000/
     routes:
       - name: rest-v1-route
         strip_path: true
@@ -27,7 +27,7 @@ services:
             - apikey
 
   - name: realtime-v1
-    url: http://realtime:4000/socket/
+    url: http://supabase-realtime:4000/socket/
     routes:
       - name: realtime-v1-route
         strip_path: true

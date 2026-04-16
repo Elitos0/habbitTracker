@@ -1,0 +1,13 @@
+node_modules
+.expo
+dist
+web-build
+android
+ios
+.git
+.gitignore
+*.md
+.vscode
+.playwright-mcp
+supabase
+.DS_Store
