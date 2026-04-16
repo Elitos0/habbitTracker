@@ -117,6 +117,12 @@ services:
   supabase-kong:
     image: kong:3.8
     restart: unless-stopped
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        eval "echo \"$$(cat /var/lib/kong/kong.template.yml)\"" > /var/lib/kong/kong.yml
+        exec /docker-entrypoint.sh kong docker-start
     depends_on:
       - supabase-auth
       - supabase-rest
@@ -131,7 +137,7 @@ services:
       ANON_KEY: ${ANON_KEY}
       SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
     volumes:
-      - ./supabase/kong.yml:/var/lib/kong/kong.yml
+      - ./supabase/kong.yml:/var/lib/kong/kong.template.yml:ro
     ports:
       - "${KONG_HTTP_PORT:-8000}:8000"
 

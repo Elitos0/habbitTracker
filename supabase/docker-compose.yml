@@ -101,6 +101,12 @@ services:
   kong:
     image: kong:3.8
     restart: unless-stopped
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        eval "echo \"$$(cat /var/lib/kong/kong.template.yml)\"" > /var/lib/kong/kong.yml
+        exec /docker-entrypoint.sh kong docker-start
     depends_on:
       - auth
       - rest
@@ -112,8 +118,10 @@ services:
       KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
       KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
       KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
     volumes:
-      - ./kong.yml:/var/lib/kong/kong.yml
+      - ./kong.yml:/var/lib/kong/kong.template.yml:ro
     ports:
       - "${KONG_HTTP_PORT:-8000}:8000"
 
