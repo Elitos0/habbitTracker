@@ -106,6 +106,8 @@ services:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       ERL_AFLAGS: "-proto_dist inet_tcp"
       DNS_NODES: "''"
+      APP_NAME: realtime
+      SEED_SELF_HOST: "true"
 
   # ── Kong (API Gateway) ─────────────────────────────────────
   supabase-kong:
