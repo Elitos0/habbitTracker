@@ -123,6 +123,40 @@ CREATE TABLE public.schema_meta (
 INSERT INTO public.schema_meta (key, value) VALUES ('schema_version', '2');
 
 -- ============================================================
+-- API GRANTS
+-- PostgREST still requires SQL privileges; RLS policies then
+-- restrict which rows each JWT role can actually access.
+-- ============================================================
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT SELECT ON public.schema_meta TO anon, authenticated, service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+  public.profiles,
+  public.tags,
+  public.habits,
+  public.habit_tags,
+  public.habit_schedules,
+  public.habit_checklist_items,
+  public.completion_records,
+  public.sub_item_completions,
+  public.reminder_rules
+TO authenticated, service_role;
+
+GRANT SELECT ON
+  public.profiles,
+  public.tags,
+  public.habits,
+  public.habit_tags,
+  public.habit_schedules,
+  public.habit_checklist_items,
+  public.completion_records,
+  public.sub_item_completions,
+  public.reminder_rules
+TO anon;
+
+-- ============================================================
 -- TRIGGER: auto-create profile on sign-up
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
