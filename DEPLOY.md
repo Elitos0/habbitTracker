@@ -85,7 +85,8 @@ cp .env.example .env
 openssl rand -base64 32
 
 # Postgres Password
-openssl rand -base64 24
+# Важно: пароль попадает в postgres:// URL, поэтому используем URL-safe hex.
+openssl rand -hex 24
 
 # Secret Key Base (для Realtime)
 openssl rand -base64 48
@@ -119,7 +120,19 @@ docker compose logs -f web
 docker compose logs -f
 ```
 
-### 6. Открой
+### 6. Примени прикладную схему
+
+Схему приложения нужно применять после старта `supabase-auth`, потому что таблицы и функции `auth.*` создаёт GoTrue.
+
+```bash
+docker exec -i habbittracker-supabase-db-1 \
+  psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  < supabase/migrations/001_initial_schema.sql
+
+docker compose restart supabase-rest
+```
+
+### 7. Открой
 
 | Сервис          | URL                   |
 | --------------- | --------------------- |
@@ -453,6 +466,7 @@ habits/
 │       └── habitsStore.supabase.ts  # Zustand-стор через Supabase
 ├── supabase/
 │   ├── migrations/
+│   │   ├── 999_platform_finalize.sh # Bootstrap ролей/служебных схем Supabase
 │   │   └── 001_initial_schema.sql  # Полная PostgreSQL-схема + RLS
 │   ├── docker-compose.yml          # Standalone Supabase compose
 │   ├── kong.yml                    # API gateway конфиг
