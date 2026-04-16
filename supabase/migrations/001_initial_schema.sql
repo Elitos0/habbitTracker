@@ -3,8 +3,9 @@
 -- Run this against your Supabase PostgreSQL database.
 -- ============================================================
 
--- Enable UUID extension (Supabase has it by default)
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- PostgreSQL 13+ provides gen_random_uuid() via pg_catalog in Supabase images.
+-- Avoid CREATE EXTENSION here: self-hosted Supabase wraps extension creation
+-- with custom scripts that require elevated pg_read_file permissions.
 
 -- ─── Profiles ────────────────────────────────────────────────
 -- Auto-created on first sign-in via trigger.
@@ -21,7 +22,7 @@ CREATE TABLE public.profiles (
 
 -- ─── Tags ────────────────────────────────────────────────────
 CREATE TABLE public.tags (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (char_length(name) BETWEEN 1 AND 50),
   color TEXT CHECK (color ~ '^#[0-9a-fA-F]{6}$'),
@@ -31,7 +32,7 @@ CREATE INDEX idx_tags_user ON public.tags(user_id);
 
 -- ─── Habits ──────────────────────────────────────────────────
 CREATE TABLE public.habits (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL CHECK (char_length(title) BETWEEN 1 AND 200),
   description TEXT CHECK (char_length(description) <= 500),
@@ -55,7 +56,7 @@ CREATE TABLE public.habit_tags (
 
 -- ─── Schedules ───────────────────────────────────────────────
 CREATE TABLE public.habit_schedules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   habit_id UUID NOT NULL REFERENCES public.habits(id) ON DELETE CASCADE,
   schedule_type TEXT NOT NULL CHECK (schedule_type IN ('daily','weekdays','interval','times_per_day')),
   interval_days INTEGER CHECK (interval_days >= 1),
@@ -69,7 +70,7 @@ CREATE INDEX idx_schedules_habit ON public.habit_schedules(habit_id);
 
 -- ─── Checklist Items ─────────────────────────────────────────
 CREATE TABLE public.habit_checklist_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   habit_id UUID NOT NULL REFERENCES public.habits(id) ON DELETE CASCADE,
   label TEXT NOT NULL CHECK (char_length(label) BETWEEN 1 AND 100),
   slot_type TEXT CHECK (slot_type IN ('morning','afternoon','evening','custom')),
@@ -80,7 +81,7 @@ CREATE INDEX idx_checklist_habit ON public.habit_checklist_items(habit_id);
 
 -- ─── Completion Records ──────────────────────────────────────
 CREATE TABLE public.completion_records (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   habit_id UUID NOT NULL REFERENCES public.habits(id) ON DELETE CASCADE,
   local_date DATE NOT NULL,
   completion_status TEXT NOT NULL DEFAULT 'none' CHECK (completion_status IN ('none','partial','done')),
@@ -93,7 +94,7 @@ CREATE INDEX idx_completions_habit_date ON public.completion_records(habit_id, l
 
 -- ─── Sub-Item Completions ────────────────────────────────────
 CREATE TABLE public.sub_item_completions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   completion_record_id UUID NOT NULL REFERENCES public.completion_records(id) ON DELETE CASCADE,
   checklist_item_id UUID NOT NULL REFERENCES public.habit_checklist_items(id) ON DELETE CASCADE,
   is_done BOOLEAN NOT NULL DEFAULT false,
@@ -103,7 +104,7 @@ CREATE INDEX idx_sub_completions_record ON public.sub_item_completions(completio
 
 -- ─── Reminder Rules ──────────────────────────────────────────
 CREATE TABLE public.reminder_rules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   habit_id UUID NOT NULL REFERENCES public.habits(id) ON DELETE CASCADE,
   channel_type TEXT NOT NULL CHECK (channel_type IN ('android','browser')),
   trigger_type TEXT NOT NULL CHECK (trigger_type IN ('daily','weekly','interval')),
