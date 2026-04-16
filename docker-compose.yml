@@ -23,6 +23,11 @@ services:
       - "${WEB_PORT:-3000}:80"
     depends_on:
       - supabase-kong
+    networks:
+      default:
+      proxy-net:
+        aliases:
+          - habit-web
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
       interval: 30s
@@ -143,6 +148,11 @@ services:
       - ./supabase/kong.yml:/var/lib/kong/kong.template.yml:ro
     ports:
       - "${KONG_HTTP_PORT:-8000}:8000"
+    networks:
+      default:
+      proxy-net:
+        aliases:
+          - habit-api
 
   # ── pg-meta ────────────────────────────────────────────────
   supabase-meta:
@@ -179,3 +189,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  proxy-net:
+    external: true
