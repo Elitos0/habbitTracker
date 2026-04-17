@@ -74,6 +74,7 @@ CREATE TABLE public.habit_checklist_items (
   habit_id UUID NOT NULL REFERENCES public.habits(id) ON DELETE CASCADE,
   label TEXT NOT NULL CHECK (char_length(label) BETWEEN 1 AND 100),
   slot_type TEXT CHECK (slot_type IN ('morning','afternoon','evening','custom')),
+  scheduled_time TEXT CHECK (scheduled_time ~ '^\d{2}:\d{2}$'),
   is_required BOOLEAN NOT NULL DEFAULT true,
   sort_order INTEGER NOT NULL DEFAULT 0
 );
@@ -120,7 +121,7 @@ CREATE TABLE public.schema_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
-INSERT INTO public.schema_meta (key, value) VALUES ('schema_version', '2');
+INSERT INTO public.schema_meta (key, value) VALUES ('schema_version', '3');
 
 -- ============================================================
 -- API GRANTS

@@ -1,25 +1,27 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import {
-    Colors,
-    DEFAULT_TAGS,
-    FontSize,
-    HABIT_COLORS,
-    Radius,
-    Spacing,
+  Colors,
+  FontSize,
+  HABIT_COLORS,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
+import type { HabitChecklistItem } from "@/src/domain/habits";
 import { useHabitsStore } from "@/src/store/habitsStore";
 
 const SCHEDULE_OPTIONS = [
@@ -30,12 +32,14 @@ const SCHEDULE_OPTIONS = [
 ] as const;
 
 const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-// Map display index (0=Mon) to JS day (1=Mon, 0=Sun)
 const WEEKDAY_JS = [1, 2, 3, 4, 5, 6, 0];
 
 type ChecklistDraft = {
+  id?: string;
   label: string;
   scheduledTime: string;
+  slotType?: HabitChecklistItem["slotType"];
+  isRequired: boolean;
 };
 
 function formatTimeInput(text: string): string {
@@ -47,14 +51,47 @@ function normalizeTime(text: string): string | undefined {
   return /^\d{2}:\d{2}$/.test(text) ? text : undefined;
 }
 
-export default function NewHabitScreen() {
+function parseWeekdays(value?: string): number[] {
+  if (!value) return [1, 2, 3, 4, 5];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((day) => Number.isInteger(day)) : [];
+  } catch {
+    return [1, 2, 3, 4, 5];
+  }
+}
+
+function confirmDestructive(
+  message: string,
+  confirmLabel: string,
+  onConfirm: () => void,
+) {
+  if (Platform.OS === "web") {
+    if (globalThis.confirm(message)) onConfirm();
+    return;
+  }
+
+  Alert.alert("Подтверждение", message, [
+    { text: "Отмена", style: "cancel" },
+    { text: confirmLabel, style: "destructive", onPress: onConfirm },
+  ]);
+}
+
+export default function EditHabitScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme() ?? "light";
   const colors = Colors[colorScheme];
-  const { tags, addHabit, addTag, loadAll } = useHabitsStore();
+  const {
+    habits,
+    tags,
+    loadAll,
+    updateHabit,
+    archiveHabit,
+    deleteHabit,
+    addTag,
+  } = useHabitsStore();
 
-  useEffect(() => {
-    loadAll();
-  }, []);
+  const habit = habits.find((item) => item.id === id);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -67,34 +104,47 @@ export default function NewHabitScreen() {
   const [intervalDays, setIntervalDays] = useState("2");
   const [timesPerDay, setTimesPerDay] = useState("3");
   const [hasChecklist, setHasChecklist] = useState(false);
-  const [checklistItems, setChecklistItems] = useState<ChecklistDraft[]>([
-    { label: "Утро", scheduledTime: "" },
-    { label: "День", scheduledTime: "" },
-    { label: "Вечер", scheduledTime: "" },
-  ]);
+  const [checklistItems, setChecklistItems] = useState<ChecklistDraft[]>([]);
   const [newTagName, setNewTagName] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Seed default tags on first render if none exist
   useEffect(() => {
-    if (tags.length === 0) {
-      (async () => {
-        for (const dt of DEFAULT_TAGS) {
-          await addTag(dt.name, dt.color);
-        }
-      })();
-    }
-  }, [tags.length]);
+    loadAll();
+  }, []);
+
+  useEffect(() => {
+    if (!habit) return;
+
+    setTitle(habit.title);
+    setDescription(habit.description ?? "");
+    setColor(habit.color);
+    setSelectedTagIds(habit.tags.map((tag) => tag.id));
+    setScheduledTime(habit.scheduledTime ?? "");
+    setScheduleType(habit.schedule?.scheduleType ?? "daily");
+    setSelectedWeekdays(parseWeekdays(habit.schedule?.weekdays));
+    setIntervalDays(String(habit.schedule?.intervalDays ?? 2));
+    setTimesPerDay(String(habit.schedule?.timesPerDay ?? 3));
+    setHasChecklist(habit.checklistItems.length > 0);
+    setChecklistItems(
+      habit.checklistItems.map((item) => ({
+        id: item.id,
+        label: item.label,
+        scheduledTime: item.scheduledTime ?? "",
+        slotType: item.slotType,
+        isRequired: item.isRequired,
+      })),
+    );
+  }, [habit?.id]);
 
   const toggleWeekday = (jsDay: number) => {
     setSelectedWeekdays((prev) =>
-      prev.includes(jsDay) ? prev.filter((d) => d !== jsDay) : [...prev, jsDay],
+      prev.includes(jsDay) ? prev.filter((day) => day !== jsDay) : [...prev, jsDay],
     );
   };
 
   const handleSave = async () => {
-    if (!title.trim()) return;
+    if (!habit || !title.trim()) return;
     setSaving(true);
 
     const schedule: any = { scheduleType };
@@ -108,13 +158,15 @@ export default function NewHabitScreen() {
       ? checklistItems
           .filter((item) => item.label.trim())
           .map((item) => ({
+            id: item.id,
             label: item.label.trim(),
+            slotType: item.slotType,
             scheduledTime: normalizeTime(item.scheduledTime),
-            isRequired: true,
+            isRequired: item.isRequired,
           }))
-      : undefined;
+      : [];
 
-    await addHabit({
+    await updateHabit(habit.id, {
       title: title.trim(),
       description: description.trim() || undefined,
       color,
@@ -125,22 +177,53 @@ export default function NewHabitScreen() {
     });
 
     setSaving(false);
-    router.back();
+    router.replace(`/habits/${habit.id}`);
   };
 
   const handleCreateTag = async () => {
     if (!newTagName.trim()) return;
-    const id = await addTag(newTagName.trim());
-    setSelectedTagIds((prev) => [...prev, id]);
+    const tagId = await addTag(newTagName.trim());
+    setSelectedTagIds((prev) => [...prev, tagId]);
     setNewTagName("");
   };
+
+  const handleArchive = () => {
+    if (!habit) return;
+    confirmDestructive(
+      "Архивировать привычку? Она исчезнет из списка, но история выполнения сохранится.",
+      "Архивировать",
+      async () => {
+        await archiveHabit(habit.id);
+        router.replace("/");
+      },
+    );
+  };
+
+  const handleDelete = () => {
+    if (!habit) return;
+    confirmDestructive(
+      "Удалить привычку навсегда? Это удалит историю, подпункты и статистику без восстановления.",
+      "Удалить",
+      async () => {
+        await deleteHabit(habit.id);
+        router.replace("/");
+      },
+    );
+  };
+
+  if (!habit) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textSecondary }}>Привычка не найдена</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
     >
-      {/* Title */}
       <Text style={[styles.label, { color: colors.text }]}>Название</Text>
       <TextInput
         style={[
@@ -155,10 +238,8 @@ export default function NewHabitScreen() {
         onChangeText={setTitle}
         placeholder="Например: Выпить воду"
         placeholderTextColor={colors.textSecondary}
-        autoFocus
       />
 
-      {/* Description */}
       <Text style={[styles.label, { color: colors.text }]}>Описание</Text>
       <TextInput
         style={[
@@ -177,25 +258,25 @@ export default function NewHabitScreen() {
         multiline
       />
 
-      {/* Color picker */}
       <Text style={[styles.label, { color: colors.text }]}>Цвет</Text>
       <View style={styles.colorRow}>
-        {HABIT_COLORS.map((c) => (
+        {HABIT_COLORS.map((habitColor) => (
           <Pressable
-            key={c}
-            onPress={() => setColor(c)}
+            key={habitColor}
+            onPress={() => setColor(habitColor)}
             style={[
               styles.colorCircle,
-              { backgroundColor: c },
-              c === color && styles.colorSelected,
+              { backgroundColor: habitColor },
+              habitColor === color && styles.colorSelected,
             ]}
           >
-            {c === color && <FontAwesome name="check" size={14} color="#fff" />}
+            {habitColor === color && (
+              <FontAwesome name="check" size={14} color="#fff" />
+            )}
           </Pressable>
         ))}
       </View>
 
-      {/* Tags */}
       <Text style={[styles.label, { color: colors.text }]}>Теги</Text>
       <View style={styles.tagRow}>
         {tags.map((tag) => {
@@ -206,7 +287,7 @@ export default function NewHabitScreen() {
               onPress={() =>
                 setSelectedTagIds((prev) =>
                   isSelected
-                    ? prev.filter((id) => id !== tag.id)
+                    ? prev.filter((tagId) => tagId !== tag.id)
                     : [...prev, tag.id],
                 )
               }
@@ -262,7 +343,6 @@ export default function NewHabitScreen() {
         </Pressable>
       </View>
 
-      {/* Time */}
       <Text style={[styles.label, { color: colors.text }]}>
         Время выполнения
       </Text>
@@ -284,7 +364,6 @@ export default function NewHabitScreen() {
         maxLength={5}
       />
 
-      {/* Schedule */}
       <Text style={[styles.label, { color: colors.text }]}>Расписание</Text>
       <View style={styles.scheduleOptions}>
         {SCHEDULE_OPTIONS.map((opt) => (
@@ -319,8 +398,8 @@ export default function NewHabitScreen() {
 
       {scheduleType === "weekdays" && (
         <View style={styles.weekdayRow}>
-          {WEEKDAY_LABELS.map((label, i) => {
-            const jsDay = WEEKDAY_JS[i];
+          {WEEKDAY_LABELS.map((label, index) => {
+            const jsDay = WEEKDAY_JS[index];
             const active = selectedWeekdays.includes(jsDay);
             return (
               <Pressable
@@ -395,7 +474,6 @@ export default function NewHabitScreen() {
         </View>
       )}
 
-      {/* Checklist */}
       <View style={styles.switchRow}>
         <Text style={[styles.label, { color: colors.text, marginBottom: 0 }]}>
           Подпункты
@@ -405,8 +483,8 @@ export default function NewHabitScreen() {
 
       {hasChecklist && (
         <View style={styles.checklistEditor}>
-          {checklistItems.map((item, i) => (
-            <View key={i} style={styles.checklistRow}>
+          {checklistItems.map((item, index) => (
+            <View key={item.id ?? `new-${index}`} style={styles.checklistRow}>
               <TextInput
                 style={[
                   styles.input,
@@ -420,10 +498,10 @@ export default function NewHabitScreen() {
                 value={item.label}
                 onChangeText={(text) => {
                   const updated = [...checklistItems];
-                  updated[i] = { ...updated[i], label: text };
+                  updated[index] = { ...updated[index], label: text };
                   setChecklistItems(updated);
                 }}
-                placeholder={`Пункт ${i + 1}`}
+                placeholder={`Пункт ${index + 1}`}
                 placeholderTextColor={colors.textSecondary}
               />
               <TextInput
@@ -438,8 +516,8 @@ export default function NewHabitScreen() {
                 value={item.scheduledTime}
                 onChangeText={(text) => {
                   const updated = [...checklistItems];
-                  updated[i] = {
-                    ...updated[i],
+                  updated[index] = {
+                    ...updated[index],
                     scheduledTime: formatTimeInput(text),
                   };
                   setChecklistItems(updated);
@@ -451,7 +529,7 @@ export default function NewHabitScreen() {
               />
               <Pressable
                 onPress={() =>
-                  setChecklistItems(checklistItems.filter((_, j) => j !== i))
+                  setChecklistItems(checklistItems.filter((_, i) => i !== index))
                 }
                 hitSlop={8}
               >
@@ -463,7 +541,7 @@ export default function NewHabitScreen() {
             onPress={() =>
               setChecklistItems([
                 ...checklistItems,
-                { label: "", scheduledTime: "" },
+                { label: "", scheduledTime: "", isRequired: true },
               ])
             }
             style={styles.addItemBtn}
@@ -476,7 +554,6 @@ export default function NewHabitScreen() {
         </View>
       )}
 
-      {/* Save button */}
       <Pressable
         onPress={handleSave}
         disabled={saving || !title.trim()}
@@ -491,7 +568,25 @@ export default function NewHabitScreen() {
         ]}
       >
         <Text style={styles.saveButtonText}>
-          {saving ? "Сохранение..." : "Сохранить привычку"}
+          {saving ? "Сохранение..." : "Сохранить изменения"}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleArchive}
+        style={[styles.archiveButton, { borderColor: colors.border }]}
+      >
+        <Text style={[styles.archiveText, { color: colors.textSecondary }]}>
+          Архивировать привычку
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleDelete}
+        style={[styles.deleteButton, { backgroundColor: colors.error + "15" }]}
+      >
+        <Text style={[styles.deleteText, { color: colors.error }]}>
+          Удалить навсегда
         </Text>
       </Pressable>
     </ScrollView>
@@ -500,6 +595,7 @@ export default function NewHabitScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   content: { padding: Spacing.md, paddingBottom: 48, gap: Spacing.xs },
   label: {
     fontSize: FontSize.sm,
@@ -622,4 +718,18 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
   saveButtonText: { color: "#fff", fontSize: FontSize.md, fontWeight: "700" },
+  archiveButton: {
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  archiveText: { fontSize: FontSize.md, fontWeight: "600" },
+  deleteButton: {
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    marginTop: Spacing.sm,
+  },
+  deleteText: { fontSize: FontSize.md, fontWeight: "700" },
 });

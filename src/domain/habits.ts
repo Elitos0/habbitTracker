@@ -80,6 +80,10 @@ export const HabitChecklistItemSchema = z.object({
   habitId: z.string().uuid(),
   label: z.string().min(1).max(100),
   slotType: SlotType.optional(),
+  scheduledTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   isRequired: z.boolean().default(true),
   sortOrder: z.number().int().min(0),
 });

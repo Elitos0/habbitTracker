@@ -83,6 +83,13 @@ function RootLayoutNav() {
             headerShadowVisible: false,
           }}
         />
+        <Stack.Screen
+          name="habits/edit"
+          options={{
+            title: "Редактировать привычку",
+            headerShadowVisible: false,
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );
