@@ -3,16 +3,16 @@ import * as AuthSession from "expo-auth-session";
 import * as Crypto from "expo-crypto";
 import * as WebBrowser from "expo-web-browser";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 import { Platform } from "react-native";
 
-import { supabase } from "@/src/lib/supabase/client";
+import { cleanAuthUrl, supabase } from "@/src/lib/supabase/client";
 
 // ─── Types ───────────────────────────────────────────────────
 interface AuthState {
@@ -39,17 +39,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setIsLoading(false);
+      if (s) cleanAuthUrl();
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
+    } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
+      if (event === "SIGNED_IN") cleanAuthUrl();
     });
 
     return () => subscription.unsubscribe();
@@ -57,25 +57,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     if (Platform.OS === "web") {
-      // Web: redirect-based OAuth
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
+        options: { redirectTo: window.location.origin },
       });
       if (error) throw error;
       return;
     }
 
-    // Native: use expo-web-browser for PKCE flow
+    // Native: PKCE flow with expo-web-browser.
     const redirectUri = AuthSession.makeRedirectUri({
       scheme: "habits",
       path: "auth/callback",
     });
 
-    // Generate PKCE verifier + challenge
-    const codeVerifier = Crypto.randomUUID() + Crypto.randomUUID();
+    // Enough entropy: 32 bytes base64url-encoded → 43 chars, within RFC 7636's 43-128 bound.
+    const randomBytes = Crypto.getRandomBytes(32);
+    const codeVerifier = btoa(String.fromCharCode(...randomBytes))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
     const hashed = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
       codeVerifier,
@@ -86,7 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .replace(/\//g, "_")
       .replace(/=+$/, "");
 
-    // Build the Supabase OAuth URL with PKCE
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -101,7 +102,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (error || !data.url) throw error ?? new Error("No OAuth URL");
 
-    // Open the browser for Google sign-in
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
     if (result.type === "success" && result.url) {

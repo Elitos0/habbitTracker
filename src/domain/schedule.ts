@@ -1,10 +1,28 @@
 import { daysBetween, getDayOfWeek } from "../lib/date/localDay";
 import type {
-    CompletionStatus,
-    HabitChecklistItem,
-    HabitSchedule,
-    SubItemCompletion,
+  CompletionStatus,
+  HabitChecklistItem,
+  HabitSchedule,
+  SubItemCompletion,
 } from "./habits";
+
+/**
+ * Safely parse a weekdays JSON string into an array of day-of-week ints (0-6).
+ * Returns [] on malformed input rather than throwing.
+ */
+export function parseWeekdays(value: string | undefined | null): number[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (day): day is number =>
+        Number.isInteger(day) && day >= 0 && day <= 6,
+    );
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Determine if a habit is expected on a given local date
@@ -26,9 +44,7 @@ export function isHabitExpectedOnDate(
       return true;
 
     case "weekdays": {
-      const weekdays: number[] = schedule.weekdays
-        ? JSON.parse(schedule.weekdays)
-        : [];
+      const weekdays = parseWeekdays(schedule.weekdays);
       return weekdays.includes(getDayOfWeek(localDate));
     }
 

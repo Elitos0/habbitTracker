@@ -23,21 +23,33 @@ export default function StatsScreen() {
     loadAll();
   }, []);
 
-  // Calculate real stats from Supabase
+  // Depend on a stable hash of habit ids so we don't refetch stats
+  // every time the habits array reference changes (e.g. after a toggle).
+  const habitIdsKey = habits.map((h) => h.id).join(",");
+
+  // Calculate real stats from Supabase (parallel, not serial).
   useEffect(() => {
-    if (habits.length === 0) return;
+    if (habits.length === 0) {
+      setHabitStats({});
+      return;
+    }
+    let cancelled = false;
     (async () => {
       const today = getLocalToday();
-      const stats: Record<string, HabitStats> = {};
-
-      for (const h of habits) {
-        const { streak, completionRate } = await fetchHabitStats(h.id, today);
-        stats[h.id] = { habitId: h.id, streak, completionRate };
-      }
-
-      setHabitStats(stats);
+      const results = await Promise.all(
+        habits.map(async (h) => {
+          const { streak, completionRate } = await fetchHabitStats(h.id, today);
+          return [h.id, { habitId: h.id, streak, completionRate }] as const;
+        }),
+      );
+      if (cancelled) return;
+      setHabitStats(Object.fromEntries(results));
     })();
-  }, [habits]);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habitIdsKey]);
 
   // Placeholder stats cards — will be backed by real DB queries
   const totalHabits = habits.length;

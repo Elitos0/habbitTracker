@@ -4,67 +4,60 @@ import { Platform } from "react-native";
 import type { Database } from "./types";
 
 // ─── Secure token storage ───
+// Native: expo-secure-store (Keychain / EncryptedSharedPreferences).
+// Web: localStorage (Supabase SDK needs a sync-readable place for session bootstrap).
 
-const webStorage: {
-  getItem: (key: string) => string | null;
-  setItem: (key: string, value: string) => void;
-  removeItem: (key: string) => void;
-} = {
-  getItem: (key) =>
-    typeof window !== "undefined" ? localStorage.getItem(key) : null,
-  setItem: (key, value) =>
-    typeof window !== "undefined" && localStorage.setItem(key, value),
-  removeItem: (key) =>
-    typeof window !== "undefined" && localStorage.removeItem(key),
-};
+const hasWindow = typeof window !== "undefined";
 
-const ExpoSecureStoreAdapter = {
-  getItem: async (key: string): Promise<string | null> => {
-    if (Platform.OS === "web") return webStorage.getItem(key);
-    return SecureStore.getItemAsync(key);
-  },
+const WebStorageAdapter = {
+  getItem: async (key: string): Promise<string | null> =>
+    hasWindow ? window.localStorage.getItem(key) : null,
   setItem: async (key: string, value: string): Promise<void> => {
-    if (Platform.OS === "web") {
-      webStorage.setItem(key, value);
-      return;
-    }
-    await SecureStore.setItemAsync(key, value);
+    if (hasWindow) window.localStorage.setItem(key, value);
   },
   removeItem: async (key: string): Promise<void> => {
-    if (Platform.OS === "web") {
-      webStorage.removeItem(key);
-      return;
-    }
-    await SecureStore.deleteItemAsync(key);
+    if (hasWindow) window.localStorage.removeItem(key);
   },
 };
 
+const SecureStoreAdapter = {
+  getItem: (key: string) => SecureStore.getItemAsync(key),
+  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+};
+
+const storage = Platform.OS === "web" ? WebStorageAdapter : SecureStoreAdapter;
+
 // ─── Config ───
-// These will be replaced with env vars from app.config / .env
-// For now, export placeholders that must be set before launching.
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  // Keep the app bootable so developers can see the login screen with a clear
+  // error rather than a white screen, but shout loudly in the console.
   console.warn(
-    "[Supabase] EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY must be set in .env",
+    "[Supabase] EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are not set.",
   );
 }
 
-// Create the client. We use `as any` for the URL/key to prevent
-// TypeScript from inferring `never` tables when env vars are empty at compile time.
-const rawClient = createClient(
+export const supabase = createClient<Database>(
   SUPABASE_URL || "https://placeholder.supabase.co",
-  SUPABASE_ANON_KEY || "placeholder",
+  SUPABASE_ANON_KEY || "placeholder-anon-key",
   {
     auth: {
-      storage: ExpoSecureStoreAdapter,
+      storage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: Platform.OS === "web",
+      flowType: "pkce",
     },
   },
 );
 
-export const supabase = rawClient as ReturnType<typeof createClient<Database>>;
+/** Strip OAuth hash/query after successful sign-in (web only). */
+export function cleanAuthUrl(): void {
+  if (Platform.OS !== "web" || !hasWindow) return;
+  const { pathname } = window.location;
+  window.history.replaceState(null, "", pathname);
+}

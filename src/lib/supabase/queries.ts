@@ -2,7 +2,13 @@
  * Shared Supabase data-fetching helpers used by screens
  * that need direct DB access beyond the Zustand store.
  */
+import { addDays } from "@/src/lib/date/localDay";
 import { supabase } from "@/src/lib/supabase/client";
+
+/** Log Supabase errors in dev; callers can treat the result as empty. */
+function logError(context: string, error: unknown): void {
+  if (error) console.warn(`[supabase:${context}]`, error);
+}
 
 /** Fetch completion records for a specific habit in a date range */
 export async function fetchHabitCompletions(
@@ -10,15 +16,15 @@ export async function fetchHabitCompletions(
   startDate: string,
   endDate: string,
 ): Promise<Record<string, string>> {
-  const { data } = (await supabase
+  const { data, error } = await supabase
     .from("completion_records")
     .select("local_date, completion_status")
     .eq("habit_id", habitId)
     .gte("local_date", startDate)
     .lte("local_date", endDate)
-    .neq("completion_status", "none")) as {
-    data: { local_date: string; completion_status: string }[] | null;
-  };
+    .neq("completion_status", "none");
+
+  logError("fetchHabitCompletions", error);
 
   const map: Record<string, string> = {};
   for (const r of data ?? []) {
@@ -32,28 +38,26 @@ export async function fetchAllCompletions(
   startDate: string,
   endDate: string,
 ): Promise<Record<string, { color: string; status: string }[]>> {
-  const { data } = (await supabase
+  const { data, error } = await supabase
     .from("completion_records")
     .select("local_date, completion_status, habits(color)")
     .gte("local_date", startDate)
     .lte("local_date", endDate)
     .neq("completion_status", "none")
-    .order("local_date")) as {
-    data:
-      | {
-          local_date: string;
-          completion_status: string;
-          habits: { color: string } | null;
-        }[]
-      | null;
-  };
+    .order("local_date");
+
+  logError("fetchAllCompletions", error);
 
   const map: Record<string, { color: string; status: string }[]> = {};
-  for (const r of data ?? []) {
-    const date = r.local_date;
-    const color = r.habits?.color ?? "#888";
-    if (!map[date]) map[date] = [];
-    map[date].push({ color, status: r.completion_status });
+  for (const r of (data ?? []) as Array<{
+    local_date: string;
+    completion_status: string;
+    habits: { color: string } | { color: string }[] | null;
+  }>) {
+    const habit = Array.isArray(r.habits) ? r.habits[0] : r.habits;
+    const color = habit?.color ?? "#888";
+    if (!map[r.local_date]) map[r.local_date] = [];
+    map[r.local_date].push({ color, status: r.completion_status });
   }
   return map;
 }
@@ -63,21 +67,22 @@ export async function fetchSubStatuses(
   habitId: string,
   localDate: string,
 ): Promise<Record<string, boolean>> {
-  const { data: rec } = (await supabase
+  const { data: rec, error: recErr } = await supabase
     .from("completion_records")
     .select("id")
     .eq("habit_id", habitId)
     .eq("local_date", localDate)
-    .maybeSingle()) as { data: { id: string } | null };
+    .maybeSingle();
 
+  logError("fetchSubStatuses:record", recErr);
   if (!rec) return {};
 
-  const { data: subs } = (await supabase
+  const { data: subs, error: subsErr } = await supabase
     .from("sub_item_completions")
     .select("checklist_item_id, is_done")
-    .eq("completion_record_id", rec.id)) as {
-    data: { checklist_item_id: string; is_done: boolean }[] | null;
-  };
+    .eq("completion_record_id", rec.id);
+
+  logError("fetchSubStatuses:subs", subsErr);
 
   const map: Record<string, boolean> = {};
   for (const s of subs ?? []) {
@@ -86,22 +91,26 @@ export async function fetchSubStatuses(
   return map;
 }
 
-/** Fetch streak and completion rate for a single habit */
+/** Fetch streak and completion rate for a single habit (last 60 days of history). */
 export async function fetchHabitStats(
   habitId: string,
   today: string,
 ): Promise<{ streak: number; completionRate: number }> {
-  const { data: rows } = (await supabase
+  // Cap history window; streaks beyond 60 days are rare and cheaper to special-case.
+  const windowStart = addDays(today, -60);
+
+  const { data: rows, error } = await supabase
     .from("completion_records")
     .select("local_date, completion_status")
     .eq("habit_id", habitId)
-    .order("local_date", { ascending: false })) as {
-    data: { local_date: string; completion_status: string }[] | null;
-  };
+    .gte("local_date", windowStart)
+    .order("local_date", { ascending: false });
+
+  logError("fetchHabitStats", error);
 
   const allRows = rows ?? [];
 
-  // Streak: count consecutive 'done' days ending today
+  // Streak: count consecutive 'done' days ending today (local-time arithmetic).
   const doneSet = new Set(
     allRows
       .filter((r) => r.completion_status === "done")
@@ -112,16 +121,11 @@ export async function fetchHabitStats(
   let checkDate = today;
   while (doneSet.has(checkDate)) {
     streak++;
-    const d = new Date(checkDate + "T00:00:00");
-    d.setDate(d.getDate() - 1);
-    checkDate = d.toISOString().slice(0, 10);
+    checkDate = addDays(checkDate, -1);
   }
 
-  // Completion rate: last 30 days
-  const thirtyDaysAgo = new Date(today + "T00:00:00");
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);
-
+  // Completion rate: last 30 days.
+  const cutoff = addDays(today, -30);
   const recentRows = allRows.filter((r) => r.local_date >= cutoff);
   const totalDays = recentRows.length || 1;
   const doneDays = recentRows.filter(

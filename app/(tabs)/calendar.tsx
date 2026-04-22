@@ -48,25 +48,32 @@ export default function CalendarScreen() {
   );
 
   useEffect(() => {
-    (async () => {
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-      const endDate = `${year}-${String(month).padStart(2, "0")}-31`;
+    if (dates.length === 0) return;
+    const startDate = dates[0];
+    const endDate = dates[dates.length - 1];
 
+    let cancelled = false;
+    (async () => {
       if (selectedHabitId) {
         const map = await fetchHabitCompletions(
           selectedHabitId,
           startDate,
           endDate,
         );
+        if (cancelled) return;
         setDateMapSingle(map);
         setDateMapAll({});
       } else {
         const map = await fetchAllCompletions(startDate, endDate);
+        if (cancelled) return;
         setDateMapAll(map);
         setDateMapSingle({});
       }
     })();
-  }, [year, month, habits, selectedHabitId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [dates, selectedHabitId]);
 
   // Build a Set of "done" dates for streak bar computation (single-habit only)
   const doneSet = useMemo(() => {
@@ -79,6 +86,7 @@ export default function CalendarScreen() {
   }, [dateMapSingle, selectedHabitId]);
 
   const firstDayOffset = (() => {
+    if (dates.length === 0) return 0;
     const d = getDayOfWeek(dates[0]);
     return d === 0 ? 6 : d - 1;
   })();

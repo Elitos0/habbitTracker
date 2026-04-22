@@ -32,6 +32,7 @@ export interface Database {
           timezone?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       tags: {
         Row: {
@@ -52,6 +53,7 @@ export interface Database {
           name?: string;
           color?: string | null;
         };
+        Relationships: [];
       };
       habits: {
         Row: {
@@ -90,6 +92,7 @@ export interface Database {
           updated_at?: string;
           sort_order?: number;
         };
+        Relationships: [];
       };
       habit_tags: {
         Row: {
@@ -101,6 +104,7 @@ export interface Database {
           tag_id: string;
         };
         Update: never;
+        Relationships: [];
       };
       habit_schedules: {
         Row: {
@@ -134,6 +138,7 @@ export interface Database {
           times_per_day?: number;
           active?: boolean;
         };
+        Relationships: [];
       };
       habit_checklist_items: {
         Row: {
@@ -161,6 +166,7 @@ export interface Database {
           is_required?: boolean;
           sort_order?: number;
         };
+        Relationships: [];
       };
       completion_records: {
         Row: {
@@ -186,6 +192,7 @@ export interface Database {
           note?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       sub_item_completions: {
         Row: {
@@ -206,6 +213,7 @@ export interface Database {
           is_done?: boolean;
           completed_at?: string | null;
         };
+        Relationships: [];
       };
       reminder_rules: {
         Row: {
@@ -236,9 +244,12 @@ export interface Database {
           interval_days?: number | null;
           enabled?: boolean;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }

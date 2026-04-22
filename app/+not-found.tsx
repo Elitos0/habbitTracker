@@ -1,17 +1,25 @@
-import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { Link, Stack } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
 
-import { Text, View } from '@/components/Themed';
+import { useColorScheme } from "@/components/useColorScheme";
+import { Colors, FontSize, Spacing } from "@/constants/theme";
 
 export default function NotFoundScreen() {
+  const colorScheme = useColorScheme() ?? "light";
+  const colors = Colors[colorScheme];
+
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn't exist.</Text>
+      <Stack.Screen options={{ title: "Oops!" }} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Страница не найдена
+        </Text>
 
         <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>Go to home screen!</Text>
+          <Text style={[styles.linkText, { color: colors.tint }]}>
+            На главный экран
+          </Text>
         </Link>
       </View>
     </>
@@ -21,20 +29,20 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.lg,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: FontSize.lg,
+    fontWeight: "700",
   },
   link: {
-    marginTop: 15,
-    paddingVertical: 15,
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.md,
   },
   linkText: {
-    fontSize: 14,
-    color: '#2e78b7',
+    fontSize: FontSize.sm,
+    fontWeight: "600",
   },
 });
