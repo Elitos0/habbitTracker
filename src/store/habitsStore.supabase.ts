@@ -21,29 +21,34 @@ type CompletionRow = Database["public"]["Tables"]["completion_records"]["Row"];
 type SubCompletionRow =
   Database["public"]["Tables"]["sub_item_completions"]["Row"];
 
+type HabitMutationParams = {
+  title: string;
+  description?: string;
+  color: string;
+  tagIds: string[];
+  scheduledTime?: string;
+  schedule: {
+    scheduleType: string;
+    weekdays?: number[];
+    intervalDays?: number;
+    timesPerDay?: number;
+  };
+  checklistItems?: {
+    id?: string;
+    label: string;
+    slotType?: HabitChecklistItem["slotType"];
+    scheduledTime?: string;
+    isRequired: boolean;
+  }[];
+};
+
 interface HabitsState {
   habits: HabitWithDetails[];
   tags: Tag[];
   isLoading: boolean;
   loadAll: () => Promise<void>;
-  addHabit: (params: {
-    title: string;
-    description?: string;
-    color: string;
-    tagIds: string[];
-    scheduledTime?: string;
-    schedule: {
-      scheduleType: string;
-      weekdays?: number[];
-      intervalDays?: number;
-      timesPerDay?: number;
-    };
-    checklistItems?: {
-      label: string;
-      slotType?: string;
-      isRequired: boolean;
-    }[];
-  }) => Promise<string>;
+  addHabit: (params: HabitMutationParams) => Promise<string>;
+  updateHabit: (habitId: string, params: HabitMutationParams) => Promise<void>;
   toggleSimpleCompletion: (habitId: string, localDate: string) => Promise<void>;
   toggleSubItem: (
     habitId: string,
@@ -52,6 +57,7 @@ interface HabitsState {
   ) => Promise<void>;
   addTag: (name: string, color?: string) => Promise<string>;
   archiveHabit: (habitId: string) => Promise<void>;
+  deleteHabit: (habitId: string) => Promise<void>;
 }
 
 async function getUserId(): Promise<string> {
@@ -169,6 +175,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
           label: c.label,
           slotType:
             (c.slot_type as HabitChecklistItem["slotType"]) ?? undefined,
+          scheduledTime: c.scheduled_time ?? undefined,
           isRequired: c.is_required,
           sortOrder: c.sort_order,
         }));
@@ -270,6 +277,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
           habit_id: id,
           label: item.label,
           slot_type: item.slotType ?? null,
+          scheduled_time: item.scheduledTime ?? null,
           is_required: item.isRequired,
           sort_order: i,
         })),
@@ -278,6 +286,98 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     await get().loadAll();
     return id;
+  },
+
+  updateHabit: async (habitId, params) => {
+    const today = getLocalToday();
+    const now = new Date().toISOString();
+
+    const { data: currentSchedule } = (await supabase
+      .from("habit_schedules")
+      .select("start_date")
+      .eq("habit_id", habitId)
+      .eq("active", true)
+      .maybeSingle()) as { data: Pick<ScheduleRow, "start_date"> | null };
+
+    await (supabase.from("habits") as any)
+      .update({
+        title: params.title,
+        description: params.description ?? null,
+        color: params.color,
+        scheduled_time: params.scheduledTime ?? null,
+        updated_at: now,
+      })
+      .eq("id", habitId);
+
+    await (supabase.from("habit_tags") as any)
+      .delete()
+      .eq("habit_id", habitId);
+
+    if (params.tagIds.length > 0) {
+      await (supabase.from("habit_tags") as any).insert(
+        params.tagIds.map((tagId) => ({ habit_id: habitId, tag_id: tagId })),
+      );
+    }
+
+    await (supabase.from("habit_schedules") as any)
+      .update({ active: false })
+      .eq("habit_id", habitId)
+      .eq("active", true);
+
+    await (supabase.from("habit_schedules") as any).insert({
+      habit_id: habitId,
+      schedule_type: params.schedule.scheduleType,
+      interval_days: params.schedule.intervalDays ?? null,
+      weekdays: params.schedule.weekdays
+        ? JSON.stringify(params.schedule.weekdays)
+        : null,
+      start_date: currentSchedule?.start_date ?? today,
+      times_per_day: params.schedule.timesPerDay ?? 1,
+      active: true,
+    });
+
+    const incomingItems = params.checklistItems ?? [];
+    const { data: existingItems } = (await supabase
+      .from("habit_checklist_items")
+      .select("*")
+      .eq("habit_id", habitId)) as { data: ChecklistRow[] | null };
+
+    const incomingIds = new Set(
+      incomingItems.map((item) => item.id).filter(Boolean),
+    );
+    const removedIds = (existingItems ?? [])
+      .filter((item) => !incomingIds.has(item.id))
+      .map((item) => item.id);
+
+    if (removedIds.length > 0) {
+      await (supabase.from("habit_checklist_items") as any)
+        .delete()
+        .in("id", removedIds);
+    }
+
+    for (const [sortOrder, item] of incomingItems.entries()) {
+      const payload = {
+        label: item.label,
+        slot_type: item.slotType ?? null,
+        scheduled_time: item.scheduledTime ?? null,
+        is_required: item.isRequired,
+        sort_order: sortOrder,
+      };
+
+      if (item.id) {
+        await (supabase.from("habit_checklist_items") as any)
+          .update(payload)
+          .eq("id", item.id)
+          .eq("habit_id", habitId);
+      } else {
+        await (supabase.from("habit_checklist_items") as any).insert({
+          habit_id: habitId,
+          ...payload,
+        });
+      }
+    }
+
+    await get().loadAll();
   },
 
   toggleSimpleCompletion: async (habitId, localDate) => {
@@ -401,8 +501,14 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
   archiveHabit: async (habitId) => {
     await (supabase.from("habits") as any)
-      .update({ is_archived: true })
+      .update({ is_archived: true, updated_at: new Date().toISOString() })
       .eq("id", habitId);
+
+    await get().loadAll();
+  },
+
+  deleteHabit: async (habitId) => {
+    await (supabase.from("habits") as any).delete().eq("id", habitId);
 
     await get().loadAll();
   },

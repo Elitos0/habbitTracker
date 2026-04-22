@@ -141,6 +141,7 @@ export interface Database {
           habit_id: string;
           label: string;
           slot_type: string | null;
+          scheduled_time: string | null;
           is_required: boolean;
           sort_order: number;
         };
@@ -149,12 +150,14 @@ export interface Database {
           habit_id: string;
           label: string;
           slot_type?: string | null;
+          scheduled_time?: string | null;
           is_required?: boolean;
           sort_order?: number;
         };
         Update: {
           label?: string;
           slot_type?: string | null;
+          scheduled_time?: string | null;
           is_required?: boolean;
           sort_order?: number;
         };

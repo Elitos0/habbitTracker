@@ -1,6 +1,6 @@
 /** SQLite schema for the Habit Tracker local database. */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS local_profile (
@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS habit_checklist_items (
   habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
   label TEXT NOT NULL,
   slot_type TEXT,
+  scheduled_time TEXT,
   is_required INTEGER NOT NULL DEFAULT 1,
   sort_order INTEGER NOT NULL DEFAULT 0
 );

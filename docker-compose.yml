@@ -23,6 +23,11 @@ services:
       - "${WEB_PORT:-3000}:80"
     depends_on:
       - supabase-kong
+    networks:
+      default:
+      proxy-net:
+        aliases:
+          - habit-web
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
       interval: 30s
@@ -121,7 +126,10 @@ services:
     command:
       - -c
       - |
-        eval "echo \"$$(cat /var/lib/kong/kong.template.yml)\"" > /var/lib/kong/kong.yml
+        sed \
+          -e "s|\$${ANON_KEY}|$${ANON_KEY}|g" \
+          -e "s|\$${SERVICE_ROLE_KEY}|$${SERVICE_ROLE_KEY}|g" \
+          /var/lib/kong/kong.template.yml > /tmp/kong.yml
         exec /docker-entrypoint.sh kong docker-start
     depends_on:
       - supabase-auth
@@ -129,7 +137,7 @@ services:
       - supabase-realtime
     environment:
       KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DECLARATIVE_CONFIG: /tmp/kong.yml
       KONG_DNS_ORDER: LAST,A,CNAME
       KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
       KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
@@ -140,6 +148,11 @@ services:
       - ./supabase/kong.yml:/var/lib/kong/kong.template.yml:ro
     ports:
       - "${KONG_HTTP_PORT:-8000}:8000"
+    networks:
+      default:
+      proxy-net:
+        aliases:
+          - habit-api
 
   # ── pg-meta ────────────────────────────────────────────────
   supabase-meta:
@@ -176,3 +189,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  proxy-net:
+    external: true

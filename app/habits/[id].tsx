@@ -1,5 +1,5 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -101,9 +101,23 @@ export default function HabitDetailScreen() {
       <View style={[styles.header, { backgroundColor: habit.color + "15" }]}>
         <View style={[styles.colorBar, { backgroundColor: habit.color }]} />
         <View style={styles.headerContent}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {habit.title}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {habit.title}
+            </Text>
+            <Pressable
+              onPress={() => router.push(`/habits/edit?id=${habit.id}`)}
+              style={[
+                styles.editButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <FontAwesome name="pencil" size={14} color={habit.color} />
+              <Text style={[styles.editButtonText, { color: habit.color }]}>
+                Изменить
+              </Text>
+            </Pressable>
+          </View>
           {habit.description && (
             <Text style={[styles.description, { color: colors.textSecondary }]}>
               {habit.description}
@@ -168,6 +182,19 @@ export default function HabitDetailScreen() {
                   >
                     {item.label}
                   </Text>
+                  {item.scheduledTime ? (
+                    <View
+                      style={[
+                        styles.subTimeBadge,
+                        { backgroundColor: habit.color + "15" },
+                      ]}
+                    >
+                      <FontAwesome name="clock-o" size={11} color={habit.color} />
+                      <Text style={[styles.subTimeText, { color: habit.color }]}>
+                        {item.scheduledTime}
+                      </Text>
+                    </View>
+                  ) : null}
                   {item.isRequired && (
                     <Text
                       style={[styles.requiredBadge, { color: colors.error }]}
@@ -302,7 +329,23 @@ const styles = StyleSheet.create({
   header: { padding: Spacing.md, flexDirection: "row", gap: Spacing.md },
   colorBar: { width: 4, borderRadius: 2 },
   headerContent: { flex: 1, gap: Spacing.xs },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.sm,
+  },
   title: { fontSize: FontSize.xl, fontWeight: "700" },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    borderWidth: 1,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  editButtonText: { fontSize: FontSize.xs, fontWeight: "700" },
   description: { fontSize: FontSize.sm },
   tagRow: {
     flexDirection: "row",
@@ -330,6 +373,15 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   checklistLabel: { flex: 1, fontSize: FontSize.md },
+  subTimeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+  },
+  subTimeText: { fontSize: FontSize.xs, fontWeight: "700" },
   strikethrough: { textDecorationLine: "line-through" },
   requiredBadge: { fontSize: FontSize.lg, fontWeight: "700" },
   simpleToggle: {

@@ -74,6 +74,7 @@ CREATE TABLE public.habit_checklist_items (
   habit_id UUID NOT NULL REFERENCES public.habits(id) ON DELETE CASCADE,
   label TEXT NOT NULL CHECK (char_length(label) BETWEEN 1 AND 100),
   slot_type TEXT CHECK (slot_type IN ('morning','afternoon','evening','custom')),
+  scheduled_time TEXT CHECK (scheduled_time ~ '^\d{2}:\d{2}$'),
   is_required BOOLEAN NOT NULL DEFAULT true,
   sort_order INTEGER NOT NULL DEFAULT 0
 );
@@ -120,7 +121,41 @@ CREATE TABLE public.schema_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
-INSERT INTO public.schema_meta (key, value) VALUES ('schema_version', '2');
+INSERT INTO public.schema_meta (key, value) VALUES ('schema_version', '3');
+
+-- ============================================================
+-- API GRANTS
+-- PostgREST still requires SQL privileges; RLS policies then
+-- restrict which rows each JWT role can actually access.
+-- ============================================================
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT SELECT ON public.schema_meta TO anon, authenticated, service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+  public.profiles,
+  public.tags,
+  public.habits,
+  public.habit_tags,
+  public.habit_schedules,
+  public.habit_checklist_items,
+  public.completion_records,
+  public.sub_item_completions,
+  public.reminder_rules
+TO authenticated, service_role;
+
+GRANT SELECT ON
+  public.profiles,
+  public.tags,
+  public.habits,
+  public.habit_tags,
+  public.habit_schedules,
+  public.habit_checklist_items,
+  public.completion_records,
+  public.sub_item_completions,
+  public.reminder_rules
+TO anon;
 
 -- ============================================================
 -- TRIGGER: auto-create profile on sign-up

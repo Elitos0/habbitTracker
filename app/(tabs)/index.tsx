@@ -273,6 +273,19 @@ export default function HabitsScreen() {
                   >
                     {ci.label}
                   </Text>
+                  {ci.scheduledTime ? (
+                    <View
+                      style={[
+                        styles.subTimeBadge,
+                        { backgroundColor: subDone ? "#fff8" : item.color + "15" },
+                      ]}
+                    >
+                      <FontAwesome name="clock-o" size={10} color={item.color} />
+                      <Text style={[styles.subTimeText, { color: item.color }]}>
+                        {ci.scheduledTime}
+                      </Text>
+                    </View>
+                  ) : null}
                 </Pressable>
               );
             })}
@@ -520,6 +533,18 @@ const styles = StyleSheet.create({
   subChipLabel: {
     fontSize: FontSize.sm,
     fontWeight: "500",
+  },
+  subTimeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+  },
+  subTimeText: {
+    fontSize: FontSize.xs,
+    fontWeight: "700",
   },
   empty: {
     alignItems: "center",
