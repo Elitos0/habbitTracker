@@ -2,32 +2,34 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
+import TimePickerField from "@/components/TimePickerField";
 import { useColorScheme } from "@/components/useColorScheme";
 import {
-    Colors,
-    DEFAULT_TAGS,
-    FontSize,
-    HABIT_COLORS,
-    Radius,
-    Spacing,
+  Colors,
+  DEFAULT_TAGS,
+  FontSize,
+  HABIT_COLORS,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
+import type { ScheduleType } from "@/src/domain/habits";
 import { useHabitsStore } from "@/src/store/habitsStore";
 
-const SCHEDULE_OPTIONS = [
+const SCHEDULE_OPTIONS: { key: ScheduleType; label: string }[] = [
   { key: "daily", label: "Каждый день" },
   { key: "weekdays", label: "По дням недели" },
   { key: "interval", label: "Каждые N дней" },
   { key: "times_per_day", label: "Несколько раз в день" },
-] as const;
+];
 
 const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 // Map display index (0=Mon) to JS day (1=Mon, 0=Sun)
@@ -38,13 +40,15 @@ type ChecklistDraft = {
   scheduledTime: string;
 };
 
-function formatTimeInput(text: string): string {
-  const digits = text.replace(/[^\d]/g, "").slice(0, 4);
-  return digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+const TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+function normalizeTime(text: string): string | undefined {
+  return TIME_RE.test(text) ? text : undefined;
 }
 
-function normalizeTime(text: string): string | undefined {
-  return /^\d{2}:\d{2}$/.test(text) ? text : undefined;
+function clampInt(text: string, min: number, max: number, fallback: number): number {
+  const n = Number.parseInt(text, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(n, min), max);
 }
 
 export default function NewHabitScreen() {
@@ -60,7 +64,7 @@ export default function NewHabitScreen() {
   const [description, setDescription] = useState("");
   const [color, setColor] = useState<string>(HABIT_COLORS[4]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [scheduleType, setScheduleType] = useState<string>("daily");
+  const [scheduleType, setScheduleType] = useState<ScheduleType>("daily");
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([
     1, 2, 3, 4, 5,
   ]);
@@ -76,16 +80,27 @@ export default function NewHabitScreen() {
   const [scheduledTime, setScheduledTime] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Seed default tags on first render if none exist
+  // Seed default tags on first render if none exist.
+  // Guarded by a ref so the effect fires at most once per screen mount,
+  // even if `tags.length` transiently flips back to 0 during a reload.
+  const seededRef = React.useRef(false);
   useEffect(() => {
-    if (tags.length === 0) {
-      (async () => {
-        for (const dt of DEFAULT_TAGS) {
-          await addTag(dt.name, dt.color);
-        }
-      })();
+    if (seededRef.current) return;
+    if (tags.length > 0) {
+      seededRef.current = true;
+      return;
     }
-  }, [tags.length]);
+    seededRef.current = true;
+    (async () => {
+      for (const dt of DEFAULT_TAGS) {
+        try {
+          await addTag(dt.name, dt.color);
+        } catch (err) {
+          console.warn("[seedTag]", dt.name, err);
+        }
+      }
+    })();
+  }, [tags.length, addTag]);
 
   const toggleWeekday = (jsDay: number) => {
     setSelectedWeekdays((prev) =>
@@ -97,12 +112,17 @@ export default function NewHabitScreen() {
     if (!title.trim()) return;
     setSaving(true);
 
-    const schedule: any = { scheduleType };
+    const schedule: {
+      scheduleType: ScheduleType;
+      weekdays?: number[];
+      intervalDays?: number;
+      timesPerDay?: number;
+    } = { scheduleType };
     if (scheduleType === "weekdays") schedule.weekdays = selectedWeekdays;
     if (scheduleType === "interval")
-      schedule.intervalDays = Number(intervalDays) || 2;
+      schedule.intervalDays = clampInt(intervalDays, 1, 365, 2);
     if (scheduleType === "times_per_day")
-      schedule.timesPerDay = Number(timesPerDay) || 1;
+      schedule.timesPerDay = clampInt(timesPerDay, 1, 24, 1);
 
     const payloadChecklistItems = hasChecklist
       ? checklistItems
@@ -266,22 +286,10 @@ export default function NewHabitScreen() {
       <Text style={[styles.label, { color: colors.text }]}>
         Время выполнения
       </Text>
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: colors.surface,
-            color: colors.text,
-            borderColor: colors.border,
-            width: 120,
-          },
-        ]}
+      <TimePickerField
         value={scheduledTime}
-        onChangeText={(text) => setScheduledTime(formatTimeInput(text))}
-        placeholder="ЧЧ:ММ"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="number-pad"
-        maxLength={5}
+        onChange={setScheduledTime}
+        placeholder="Выбрать время"
       />
 
       {/* Schedule */}
@@ -426,28 +434,15 @@ export default function NewHabitScreen() {
                 placeholder={`Пункт ${i + 1}`}
                 placeholderTextColor={colors.textSecondary}
               />
-              <TextInput
-                style={[
-                  styles.timeInput,
-                  {
-                    backgroundColor: colors.surface,
-                    color: colors.text,
-                    borderColor: colors.border,
-                  },
-                ]}
+              <TimePickerField
+                compact
                 value={item.scheduledTime}
-                onChangeText={(text) => {
+                onChange={(text) => {
                   const updated = [...checklistItems];
-                  updated[i] = {
-                    ...updated[i],
-                    scheduledTime: formatTimeInput(text),
-                  };
+                  updated[i] = { ...updated[i], scheduledTime: text };
                   setChecklistItems(updated);
                 }}
                 placeholder="ЧЧ:ММ"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="number-pad"
-                maxLength={5}
               />
               <Pressable
                 onPress={() =>

@@ -1,8 +1,9 @@
 import type {
-    HabitChecklistItem,
-    HabitSchedule,
-    HabitWithDetails,
-    Tag,
+  HabitChecklistItem,
+  HabitSchedule,
+  HabitWithDetails,
+  ScheduleType,
+  Tag,
 } from "@/src/domain/habits";
 import { computeCompletionStatus } from "@/src/domain/schedule";
 import { getLocalToday } from "@/src/lib/date/localDay";
@@ -11,9 +12,6 @@ import type { Database } from "@/src/lib/supabase/types";
 import { create } from "zustand";
 
 // Row types for type safety
-type TagRow = Database["public"]["Tables"]["tags"]["Row"];
-type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
-type HabitTagRow = Database["public"]["Tables"]["habit_tags"]["Row"];
 type ScheduleRow = Database["public"]["Tables"]["habit_schedules"]["Row"];
 type ChecklistRow =
   Database["public"]["Tables"]["habit_checklist_items"]["Row"];
@@ -28,7 +26,7 @@ type HabitMutationParams = {
   tagIds: string[];
   scheduledTime?: string;
   schedule: {
-    scheduleType: string;
+    scheduleType: ScheduleType;
     weekdays?: number[];
     intervalDays?: number;
     timesPerDay?: number;
@@ -68,6 +66,42 @@ async function getUserId(): Promise<string> {
   return user.id;
 }
 
+function throwIf<T>(result: { data: T; error: unknown }, context: string): T {
+  if (result.error) {
+    console.warn(`[habitsStore:${context}]`, result.error);
+    throw result.error instanceof Error
+      ? result.error
+      : new Error(`${context} failed`);
+  }
+  return result.data;
+}
+
+/** Get-or-create a completion record for (habitId, localDate) atomically. */
+async function ensureCompletionRecord(
+  habitId: string,
+  localDate: string,
+): Promise<CompletionRow> {
+  // Upsert with onConflict on the UNIQUE(habit_id, local_date) constraint
+  // gives us read-your-writes semantics without a read-then-insert race.
+  const { data, error } = await supabase
+    .from("completion_records")
+    .upsert(
+      {
+        habit_id: habitId,
+        local_date: localDate,
+        completion_status: "none",
+      },
+      { onConflict: "habit_id,local_date", ignoreDuplicates: false },
+    )
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error("Failed to upsert completion record");
+  }
+  return data as CompletionRow;
+}
+
 export const useHabitsStore = create<HabitsState>((set, get) => ({
   habits: [],
   tags: [],
@@ -78,11 +112,14 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     const today = getLocalToday();
 
     // Load tags
-    const { data: tagRows } = (await supabase
-      .from("tags")
-      .select("*")
-      .eq("user_id", userId)
-      .order("name")) as { data: TagRow[] | null };
+    const tagRows = throwIf(
+      await supabase
+        .from("tags")
+        .select("*")
+        .eq("user_id", userId)
+        .order("name"),
+      "loadAll:tags",
+    );
 
     const tags: Tag[] = (tagRows ?? []).map((r) => ({
       id: r.id,
@@ -91,16 +128,17 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
       createdAt: r.created_at,
     }));
 
-    // Load habits with all related data in fewer queries
-    const { data: habitRows } = (await supabase
-      .from("habits")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_archived", false)
-      .order("sort_order")
-      .order("created_at", { ascending: false })) as {
-      data: HabitRow[] | null;
-    };
+    // Load habits
+    const habitRows = throwIf(
+      await supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_archived", false)
+        .order("sort_order")
+        .order("created_at", { ascending: false }),
+      "loadAll:habits",
+    );
 
     if (!habitRows || habitRows.length === 0) {
       set({ habits: [], tags, isLoading: false });
@@ -109,34 +147,34 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     const habitIds = habitRows.map((h) => h.id);
 
-    // Batch load all related data
+    // Batch load all related data in parallel
     const [htResult, schedResult, clResult, compResult] = await Promise.all([
-      supabase.from("habit_tags").select("*").in("habit_id", habitIds) as any,
+      supabase.from("habit_tags").select("*").in("habit_id", habitIds),
       supabase
         .from("habit_schedules")
         .select("*")
         .in("habit_id", habitIds)
-        .eq("active", true) as any,
+        .eq("active", true),
       supabase
         .from("habit_checklist_items")
         .select("*")
         .in("habit_id", habitIds)
-        .order("sort_order") as any,
+        .order("sort_order"),
       supabase
         .from("completion_records")
         .select("*")
         .in("habit_id", habitIds)
-        .eq("local_date", today) as any,
+        .eq("local_date", today),
     ]);
 
-    const htRows: HabitTagRow[] = htResult.data ?? [];
-    const schedRows: ScheduleRow[] = schedResult.data ?? [];
-    const clRows: ChecklistRow[] = clResult.data ?? [];
-    const compRows: CompletionRow[] = compResult.data ?? [];
+    const htRows = htResult.data ?? [];
+    const schedRows = schedResult.data ?? [];
+    const clRows = clResult.data ?? [];
+    const compRows = compResult.data ?? [];
 
     // Load sub-item completions for today's records
     const compIds = compRows.map((c) => c.id);
-    let subRows: any[] = [];
+    let subRows: SubCompletionRow[] = [];
     if (compIds.length > 0) {
       const { data } = await supabase
         .from("sub_item_completions")
@@ -156,8 +194,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
         ? {
             id: schedRow.id,
             habitId: schedRow.habit_id,
-            scheduleType:
-              schedRow.schedule_type as HabitSchedule["scheduleType"],
+            scheduleType: schedRow.schedule_type as ScheduleType,
             intervalDays: schedRow.interval_days ?? undefined,
             weekdays: schedRow.weekdays ?? undefined,
             startDate: schedRow.start_date,
@@ -204,7 +241,9 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
             todaySubStatuses[s.checklist_item_id] = s.is_done;
           }
         } else {
-          todayStatus = compRow.completion_status as any;
+          todayStatus =
+            (compRow.completion_status as "none" | "partial" | "done") ??
+            "none";
         }
       }
 
@@ -235,7 +274,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     const today = getLocalToday();
 
     // Insert habit
-    const { data: habit, error } = (await (supabase.from("habits") as any)
+    const { data: habit, error } = await supabase
+      .from("habits")
       .insert({
         user_id: userId,
         title: params.title,
@@ -245,20 +285,23 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
         sort_order: 0,
       })
       .select("id")
-      .single()) as { data: { id: string } | null; error: any };
+      .single();
 
     if (error || !habit) throw error ?? new Error("Failed to create habit");
     const id = habit.id;
 
     // Tags
     if (params.tagIds.length > 0) {
-      await (supabase.from("habit_tags") as any).insert(
-        params.tagIds.map((tagId) => ({ habit_id: id, tag_id: tagId })),
-      );
+      const { error: tagErr } = await supabase
+        .from("habit_tags")
+        .insert(
+          params.tagIds.map((tagId) => ({ habit_id: id, tag_id: tagId })),
+        );
+      if (tagErr) console.warn("[addHabit:tags]", tagErr);
     }
 
     // Schedule
-    await (supabase.from("habit_schedules") as any).insert({
+    const { error: schedErr } = await supabase.from("habit_schedules").insert({
       habit_id: id,
       schedule_type: params.schedule.scheduleType,
       interval_days: params.schedule.intervalDays ?? null,
@@ -269,19 +312,23 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
       times_per_day: params.schedule.timesPerDay ?? 1,
       active: true,
     });
+    if (schedErr) console.warn("[addHabit:schedule]", schedErr);
 
     // Checklist items
     if (params.checklistItems && params.checklistItems.length > 0) {
-      await (supabase.from("habit_checklist_items") as any).insert(
-        params.checklistItems.map((item, i) => ({
-          habit_id: id,
-          label: item.label,
-          slot_type: item.slotType ?? null,
-          scheduled_time: item.scheduledTime ?? null,
-          is_required: item.isRequired,
-          sort_order: i,
-        })),
-      );
+      const { error: clErr } = await supabase
+        .from("habit_checklist_items")
+        .insert(
+          params.checklistItems.map((item, i) => ({
+            habit_id: id,
+            label: item.label,
+            slot_type: item.slotType ?? null,
+            scheduled_time: item.scheduledTime ?? null,
+            is_required: item.isRequired,
+            sort_order: i,
+          })),
+        );
+      if (clErr) console.warn("[addHabit:checklist]", clErr);
     }
 
     await get().loadAll();
@@ -292,14 +339,15 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     const today = getLocalToday();
     const now = new Date().toISOString();
 
-    const { data: currentSchedule } = (await supabase
+    const { data: currentSchedule } = await supabase
       .from("habit_schedules")
-      .select("start_date")
+      .select("id, start_date")
       .eq("habit_id", habitId)
       .eq("active", true)
-      .maybeSingle()) as { data: Pick<ScheduleRow, "start_date"> | null };
+      .maybeSingle();
 
-    await (supabase.from("habits") as any)
+    const { error: habitErr } = await supabase
+      .from("habits")
       .update({
         title: params.title,
         description: params.description ?? null,
@@ -308,49 +356,67 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
         updated_at: now,
       })
       .eq("id", habitId);
+    if (habitErr) console.warn("[updateHabit:habit]", habitErr);
 
-    await (supabase.from("habit_tags") as any)
-      .delete()
-      .eq("habit_id", habitId);
+    // Replace tags (delete + insert). Small N so a full replace is fine.
+    await supabase.from("habit_tags").delete().eq("habit_id", habitId);
 
     if (params.tagIds.length > 0) {
-      await (supabase.from("habit_tags") as any).insert(
-        params.tagIds.map((tagId) => ({ habit_id: habitId, tag_id: tagId })),
-      );
+      const { error: tagErr } = await supabase
+        .from("habit_tags")
+        .insert(
+          params.tagIds.map((tagId) => ({ habit_id: habitId, tag_id: tagId })),
+        );
+      if (tagErr) console.warn("[updateHabit:tags]", tagErr);
     }
 
-    await (supabase.from("habit_schedules") as any)
-      .update({ active: false })
-      .eq("habit_id", habitId)
-      .eq("active", true);
-
-    await (supabase.from("habit_schedules") as any).insert({
-      habit_id: habitId,
+    // Update schedule in place when one already exists — don't version on
+    // every save (avoids O(edits) rows in habit_schedules per habit).
+    const schedulePayload = {
       schedule_type: params.schedule.scheduleType,
       interval_days: params.schedule.intervalDays ?? null,
       weekdays: params.schedule.weekdays
         ? JSON.stringify(params.schedule.weekdays)
         : null,
-      start_date: currentSchedule?.start_date ?? today,
       times_per_day: params.schedule.timesPerDay ?? 1,
       active: true,
-    });
+    };
+
+    if (currentSchedule) {
+      const { error: schedErr } = await supabase
+        .from("habit_schedules")
+        .update(schedulePayload)
+        .eq("id", currentSchedule.id);
+      if (schedErr) console.warn("[updateHabit:schedule]", schedErr);
+    } else {
+      const { error: schedErr } = await supabase
+        .from("habit_schedules")
+        .insert({
+          habit_id: habitId,
+          ...schedulePayload,
+          start_date: today,
+        });
+      if (schedErr) console.warn("[updateHabit:schedule:insert]", schedErr);
+    }
 
     const incomingItems = params.checklistItems ?? [];
-    const { data: existingItems } = (await supabase
+    const { data: existingItems } = await supabase
       .from("habit_checklist_items")
       .select("*")
-      .eq("habit_id", habitId)) as { data: ChecklistRow[] | null };
+      .eq("habit_id", habitId);
 
     const incomingIds = new Set(
-      incomingItems.map((item) => item.id).filter(Boolean),
+      incomingItems
+        .map((item) => item.id)
+        .filter((id): id is string => Boolean(id)),
     );
-    const removedIds = (existingItems ?? [])
+    const removedIds = ((existingItems ?? []) as ChecklistRow[])
       .filter((item) => !incomingIds.has(item.id))
       .map((item) => item.id);
 
     if (removedIds.length > 0) {
-      await (supabase.from("habit_checklist_items") as any)
+      await supabase
+        .from("habit_checklist_items")
         .delete()
         .in("id", removedIds);
     }
@@ -365,15 +431,15 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
       };
 
       if (item.id) {
-        await (supabase.from("habit_checklist_items") as any)
+        await supabase
+          .from("habit_checklist_items")
           .update(payload)
           .eq("id", item.id)
           .eq("habit_id", habitId);
       } else {
-        await (supabase.from("habit_checklist_items") as any).insert({
-          habit_id: habitId,
-          ...payload,
-        });
+        await supabase
+          .from("habit_checklist_items")
+          .insert({ habit_id: habitId, ...payload });
       }
     }
 
@@ -383,25 +449,27 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   toggleSimpleCompletion: async (habitId, localDate) => {
     const now = new Date().toISOString();
 
-    // Check existing
-    const { data: existing } = (await supabase
+    const { data: existing } = await supabase
       .from("completion_records")
-      .select("*")
+      .select("id, completion_status")
       .eq("habit_id", habitId)
       .eq("local_date", localDate)
-      .maybeSingle()) as { data: CompletionRow | null };
+      .maybeSingle();
 
     if (existing) {
       const newStatus = existing.completion_status === "done" ? "none" : "done";
-      await (supabase.from("completion_records") as any)
+      const { error } = await supabase
+        .from("completion_records")
         .update({ completion_status: newStatus, updated_at: now })
         .eq("id", existing.id);
+      if (error) console.warn("[toggleSimpleCompletion:update]", error);
     } else {
-      await (supabase.from("completion_records") as any).insert({
+      const { error } = await supabase.from("completion_records").insert({
         habit_id: habitId,
         local_date: localDate,
         completion_status: "done",
       });
+      if (error) console.warn("[toggleSimpleCompletion:insert]", error);
     }
 
     await get().loadAll();
@@ -410,66 +478,47 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   toggleSubItem: async (habitId, checklistItemId, localDate) => {
     const now = new Date().toISOString();
 
-    // Ensure a completion record exists
-    let { data: record } = (await supabase
-      .from("completion_records")
-      .select("*")
-      .eq("habit_id", habitId)
-      .eq("local_date", localDate)
-      .maybeSingle()) as { data: CompletionRow | null };
-
-    if (!record) {
-      const { data: newRec } = (await (
-        supabase.from("completion_records") as any
-      )
-        .insert({
-          habit_id: habitId,
-          local_date: localDate,
-          completion_status: "none",
-        })
-        .select("*")
-        .single()) as { data: CompletionRow | null };
-      record = newRec;
-    }
-    if (!record) throw new Error("Failed to create completion record");
+    // Upsert the completion record — safe under concurrent taps.
+    const record = await ensureCompletionRecord(habitId, localDate);
 
     // Toggle sub-item
-    const { data: sub } = (await supabase
+    const { data: sub } = await supabase
       .from("sub_item_completions")
-      .select("*")
+      .select("id, is_done")
       .eq("completion_record_id", record.id)
       .eq("checklist_item_id", checklistItemId)
-      .maybeSingle()) as { data: SubCompletionRow | null };
+      .maybeSingle();
 
     if (sub) {
-      await (supabase.from("sub_item_completions") as any)
+      const { error } = await supabase
+        .from("sub_item_completions")
         .update({
           is_done: !sub.is_done,
           completed_at: sub.is_done ? null : now,
         })
         .eq("id", sub.id);
+      if (error) console.warn("[toggleSubItem:update]", error);
     } else {
-      await (supabase.from("sub_item_completions") as any).insert({
+      const { error } = await supabase.from("sub_item_completions").insert({
         completion_record_id: record.id,
         checklist_item_id: checklistItemId,
         is_done: true,
         completed_at: now,
       });
+      if (error) console.warn("[toggleSubItem:insert]", error);
     }
 
     // Recompute completion status
     const habit = get().habits.find((h) => h.id === habitId);
     if (habit) {
-      const { data: allSubs } = (await supabase
+      const { data: allSubs } = await supabase
         .from("sub_item_completions")
         .select("*")
-        .eq("completion_record_id", record.id)) as {
-        data: SubCompletionRow[] | null;
-      };
+        .eq("completion_record_id", record.id);
 
       const status = computeCompletionStatus(
         habit.checklistItems,
-        (allSubs ?? []).map((s) => ({
+        ((allSubs ?? []) as SubCompletionRow[]).map((s) => ({
           id: s.id,
           completionRecordId: s.completion_record_id,
           checklistItemId: s.checklist_item_id,
@@ -477,9 +526,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
           completedAt: s.completed_at ?? undefined,
         })),
       );
-      await (supabase.from("completion_records") as any)
+      const { error } = await supabase
+        .from("completion_records")
         .update({ completion_status: status, updated_at: now })
         .eq("id", record.id);
+      if (error) console.warn("[toggleSubItem:recompute]", error);
     }
 
     await get().loadAll();
@@ -488,10 +539,24 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   addTag: async (name, color) => {
     const userId = await getUserId();
 
-    const { data, error } = (await (supabase.from("tags") as any)
+    // Idempotent: if a tag with this name already exists for the user,
+    // return its id instead of failing on the UNIQUE(user_id, name) index.
+    const { data: existing } = await supabase
+      .from("tags")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("name", name)
+      .maybeSingle();
+    if (existing) {
+      await get().loadAll();
+      return existing.id;
+    }
+
+    const { data, error } = await supabase
+      .from("tags")
       .insert({ user_id: userId, name, color: color ?? null })
       .select("id")
-      .single()) as { data: { id: string } | null; error: any };
+      .single();
 
     if (error || !data) throw error ?? new Error("Failed to create tag");
 
@@ -500,15 +565,18 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   },
 
   archiveHabit: async (habitId) => {
-    await (supabase.from("habits") as any)
+    const { error } = await supabase
+      .from("habits")
       .update({ is_archived: true, updated_at: new Date().toISOString() })
       .eq("id", habitId);
+    if (error) console.warn("[archiveHabit]", error);
 
     await get().loadAll();
   },
 
   deleteHabit: async (habitId) => {
-    await (supabase.from("habits") as any).delete().eq("id", habitId);
+    const { error } = await supabase.from("habits").delete().eq("id", habitId);
+    if (error) console.warn("[deleteHabit]", error);
 
     await get().loadAll();
   },

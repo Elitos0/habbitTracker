@@ -32,12 +32,15 @@ export type ReminderTrigger = z.infer<typeof ReminderTrigger>;
 
 // ─── Core Entities ───
 
+const TimeOfDayRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+
 export const HabitSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(200),
   description: z.string().max(500).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   icon: z.string().optional(),
+  scheduledTime: z.string().regex(TimeOfDayRegex).optional(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -80,10 +83,7 @@ export const HabitChecklistItemSchema = z.object({
   habitId: z.string().uuid(),
   label: z.string().min(1).max(100),
   slotType: SlotType.optional(),
-  scheduledTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional(),
+  scheduledTime: z.string().regex(TimeOfDayRegex).optional(),
   isRequired: z.boolean().default(true),
   sortOrder: z.number().int().min(0),
 });
@@ -114,7 +114,7 @@ export const ReminderRuleSchema = z.object({
   habitId: z.string().uuid(),
   channelType: ReminderChannel,
   triggerType: ReminderTrigger,
-  timeOfDay: z.string(), // HH:MM
+  timeOfDay: z.string().regex(TimeOfDayRegex),
   weekday: z.number().int().min(0).max(6).optional(),
   intervalDays: z.number().int().min(1).optional(),
   enabled: z.boolean().default(true),

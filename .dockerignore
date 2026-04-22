@@ -11,3 +11,7 @@ ios
 .playwright-mcp
 supabase
 .DS_Store
+.env
+.env.*
+*.tsbuildinfo
+*.log

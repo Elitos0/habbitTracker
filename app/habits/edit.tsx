@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import TimePickerField from "@/components/TimePickerField";
 import { useColorScheme } from "@/components/useColorScheme";
 import {
   Colors,
@@ -21,15 +22,19 @@ import {
   Radius,
   Spacing,
 } from "@/constants/theme";
-import type { HabitChecklistItem } from "@/src/domain/habits";
+import type {
+  HabitChecklistItem,
+  ScheduleType,
+} from "@/src/domain/habits";
+import { parseWeekdays as parseWeekdaysJson } from "@/src/domain/schedule";
 import { useHabitsStore } from "@/src/store/habitsStore";
 
-const SCHEDULE_OPTIONS = [
+const SCHEDULE_OPTIONS: { key: ScheduleType; label: string }[] = [
   { key: "daily", label: "Каждый день" },
   { key: "weekdays", label: "По дням недели" },
   { key: "interval", label: "Каждые N дней" },
   { key: "times_per_day", label: "Несколько раз в день" },
-] as const;
+];
 
 const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const WEEKDAY_JS = [1, 2, 3, 4, 5, 6, 0];
@@ -42,23 +47,20 @@ type ChecklistDraft = {
   isRequired: boolean;
 };
 
-function formatTimeInput(text: string): string {
-  const digits = text.replace(/[^\d]/g, "").slice(0, 4);
-  return digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
-}
-
+const TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 function normalizeTime(text: string): string | undefined {
-  return /^\d{2}:\d{2}$/.test(text) ? text : undefined;
+  return TIME_RE.test(text) ? text : undefined;
 }
 
-function parseWeekdays(value?: string): number[] {
-  if (!value) return [1, 2, 3, 4, 5];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((day) => Number.isInteger(day)) : [];
-  } catch {
-    return [1, 2, 3, 4, 5];
-  }
+function clampInt(text: string, min: number, max: number, fallback: number): number {
+  const n = Number.parseInt(text, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(n, min), max);
+}
+
+function initialWeekdays(value?: string): number[] {
+  const parsed = parseWeekdaysJson(value);
+  return parsed.length > 0 ? parsed : [1, 2, 3, 4, 5];
 }
 
 function confirmDestructive(
@@ -97,7 +99,7 @@ export default function EditHabitScreen() {
   const [description, setDescription] = useState("");
   const [color, setColor] = useState<string>(HABIT_COLORS[4]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [scheduleType, setScheduleType] = useState<string>("daily");
+  const [scheduleType, setScheduleType] = useState<ScheduleType>("daily");
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([
     1, 2, 3, 4, 5,
   ]);
@@ -122,7 +124,7 @@ export default function EditHabitScreen() {
     setSelectedTagIds(habit.tags.map((tag) => tag.id));
     setScheduledTime(habit.scheduledTime ?? "");
     setScheduleType(habit.schedule?.scheduleType ?? "daily");
-    setSelectedWeekdays(parseWeekdays(habit.schedule?.weekdays));
+    setSelectedWeekdays(initialWeekdays(habit.schedule?.weekdays));
     setIntervalDays(String(habit.schedule?.intervalDays ?? 2));
     setTimesPerDay(String(habit.schedule?.timesPerDay ?? 3));
     setHasChecklist(habit.checklistItems.length > 0);
@@ -147,12 +149,17 @@ export default function EditHabitScreen() {
     if (!habit || !title.trim()) return;
     setSaving(true);
 
-    const schedule: any = { scheduleType };
+    const schedule: {
+      scheduleType: ScheduleType;
+      weekdays?: number[];
+      intervalDays?: number;
+      timesPerDay?: number;
+    } = { scheduleType };
     if (scheduleType === "weekdays") schedule.weekdays = selectedWeekdays;
     if (scheduleType === "interval")
-      schedule.intervalDays = Number(intervalDays) || 2;
+      schedule.intervalDays = clampInt(intervalDays, 1, 365, 2);
     if (scheduleType === "times_per_day")
-      schedule.timesPerDay = Number(timesPerDay) || 1;
+      schedule.timesPerDay = clampInt(timesPerDay, 1, 24, 1);
 
     const payloadChecklistItems = hasChecklist
       ? checklistItems
@@ -346,22 +353,10 @@ export default function EditHabitScreen() {
       <Text style={[styles.label, { color: colors.text }]}>
         Время выполнения
       </Text>
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: colors.surface,
-            color: colors.text,
-            borderColor: colors.border,
-            width: 120,
-          },
-        ]}
+      <TimePickerField
         value={scheduledTime}
-        onChangeText={(text) => setScheduledTime(formatTimeInput(text))}
-        placeholder="ЧЧ:ММ"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="number-pad"
-        maxLength={5}
+        onChange={setScheduledTime}
+        placeholder="Выбрать время"
       />
 
       <Text style={[styles.label, { color: colors.text }]}>Расписание</Text>
@@ -504,28 +499,15 @@ export default function EditHabitScreen() {
                 placeholder={`Пункт ${index + 1}`}
                 placeholderTextColor={colors.textSecondary}
               />
-              <TextInput
-                style={[
-                  styles.timeInput,
-                  {
-                    backgroundColor: colors.surface,
-                    color: colors.text,
-                    borderColor: colors.border,
-                  },
-                ]}
+              <TimePickerField
+                compact
                 value={item.scheduledTime}
-                onChangeText={(text) => {
+                onChange={(text) => {
                   const updated = [...checklistItems];
-                  updated[index] = {
-                    ...updated[index],
-                    scheduledTime: formatTimeInput(text),
-                  };
+                  updated[index] = { ...updated[index], scheduledTime: text };
                   setChecklistItems(updated);
                 }}
                 placeholder="ЧЧ:ММ"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="number-pad"
-                maxLength={5}
               />
               <Pressable
                 onPress={() =>

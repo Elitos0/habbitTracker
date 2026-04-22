@@ -40,16 +40,22 @@ export default function HabitDetailScreen() {
     loadAll();
   }, []);
 
+  const dates = useMemo(() => getMonthDates(year, month), [year, month]);
+
   // Load completion records for this habit in the current month
   useEffect(() => {
-    if (!id) return;
+    if (!id || dates.length === 0) return;
+    let cancelled = false;
     (async () => {
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-      const endDate = `${year}-${String(month).padStart(2, "0")}-31`;
+      const startDate = dates[0];
+      const endDate = dates[dates.length - 1];
       const map = await fetchHabitCompletions(id, startDate, endDate);
-      setCompletionDates(map);
+      if (!cancelled) setCompletionDates(map);
     })();
-  }, [id, year, month, habits]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, dates]);
 
   // Load sub-item statuses for selected date
   useEffect(() => {
@@ -60,8 +66,8 @@ export default function HabitDetailScreen() {
     })();
   }, [id, selectedDate, habits]);
 
-  const dates = useMemo(() => getMonthDates(year, month), [year, month]);
   const firstDayOffset = (() => {
+    if (dates.length === 0) return 0;
     const d = getDayOfWeek(dates[0]);
     return d === 0 ? 6 : d - 1;
   })();
