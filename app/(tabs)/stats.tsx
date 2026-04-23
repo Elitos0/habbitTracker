@@ -1,3 +1,4 @@
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -60,7 +61,11 @@ export default function StatsScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Сегодня</Text>
+      <SectionHeader
+        icon="calendar-check-o"
+        title="Сегодня"
+        colors={colors}
+      />
       <View style={styles.cardsRow}>
         <StatCard
           label="Всего"
@@ -88,9 +93,11 @@ export default function StatsScreen() {
         />
       </View>
 
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>
-        По привычкам
-      </Text>
+      <SectionHeader
+        icon="line-chart"
+        title="По привычкам"
+        colors={colors}
+      />
       {habits.map((h) => {
         const s = habitStats[h.id];
         return (
@@ -123,6 +130,32 @@ export default function StatsScreen() {
   );
 }
 
+function SectionHeader({
+  icon,
+  title,
+  colors,
+}: {
+  icon: React.ComponentProps<typeof FontAwesome>["name"];
+  title: string;
+  colors: (typeof Colors)["light"];
+}) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View
+        style={[
+          styles.sectionIconWrap,
+          { backgroundColor: colors.tint + "18" },
+        ]}
+      >
+        <FontAwesome name={icon} size={14} color={colors.tint} />
+      </View>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        {title}
+      </Text>
+    </View>
+  );
+}
+
 function StatCard({
   label,
   value,
@@ -148,11 +181,23 @@ function StatCard({
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: Spacing.md },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  sectionIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: Radius.sm,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   sectionTitle: {
     fontSize: FontSize.lg,
     fontWeight: "700",
-    marginBottom: Spacing.sm,
-    marginTop: Spacing.md,
   },
   cardsRow: { flexDirection: "row", gap: Spacing.sm },
   card: {

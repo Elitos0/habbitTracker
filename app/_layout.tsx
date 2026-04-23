@@ -90,6 +90,13 @@ function RootLayoutNav() {
             headerShadowVisible: false,
           }}
         />
+        <Stack.Screen
+          name="archive"
+          options={{
+            title: "Архив",
+            headerShadowVisible: false,
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );

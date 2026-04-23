@@ -55,7 +55,9 @@ interface HabitsState {
   ) => Promise<void>;
   addTag: (name: string, color?: string) => Promise<string>;
   archiveHabit: (habitId: string) => Promise<void>;
+  unarchiveHabit: (habitId: string) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
+  loadArchivedHabits: () => Promise<HabitWithDetails[]>;
 }
 
 async function getUserId(): Promise<string> {
@@ -574,10 +576,95 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     await get().loadAll();
   },
 
+  unarchiveHabit: async (habitId) => {
+    const { error } = await supabase
+      .from("habits")
+      .update({ is_archived: false, updated_at: new Date().toISOString() })
+      .eq("id", habitId);
+    if (error) console.warn("[unarchiveHabit]", error);
+
+    await get().loadAll();
+  },
+
   deleteHabit: async (habitId) => {
     const { error } = await supabase.from("habits").delete().eq("id", habitId);
     if (error) console.warn("[deleteHabit]", error);
 
     await get().loadAll();
+  },
+
+  loadArchivedHabits: async () => {
+    const userId = await getUserId();
+
+    const { data: habitRows, error } = await supabase
+      .from("habits")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_archived", true)
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.warn("[loadArchivedHabits]", error);
+      return [];
+    }
+    if (!habitRows || habitRows.length === 0) return [];
+
+    const habitIds = habitRows.map((h) => h.id);
+
+    const [htResult, schedResult, tagsResult] = await Promise.all([
+      supabase.from("habit_tags").select("*").in("habit_id", habitIds),
+      supabase
+        .from("habit_schedules")
+        .select("*")
+        .in("habit_id", habitIds)
+        .eq("active", true),
+      supabase.from("tags").select("*").eq("user_id", userId),
+    ]);
+
+    const htRows = htResult.data ?? [];
+    const schedRows = schedResult.data ?? [];
+    const allTags: Tag[] = (tagsResult.data ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      color: r.color ?? undefined,
+      createdAt: r.created_at,
+    }));
+
+    return habitRows.map((h) => {
+      const habitTags = allTags.filter((t) =>
+        htRows.some((ht) => ht.habit_id === h.id && ht.tag_id === t.id),
+      );
+      const schedRow = schedRows.find((s) => s.habit_id === h.id);
+      const schedule: HabitSchedule | null = schedRow
+        ? {
+            id: schedRow.id,
+            habitId: schedRow.habit_id,
+            scheduleType: schedRow.schedule_type as ScheduleType,
+            intervalDays: schedRow.interval_days ?? undefined,
+            weekdays: schedRow.weekdays ?? undefined,
+            startDate: schedRow.start_date,
+            endDate: schedRow.end_date ?? undefined,
+            timesPerDay: schedRow.times_per_day,
+            active: schedRow.active,
+          }
+        : null;
+
+      return {
+        id: h.id,
+        title: h.title,
+        description: h.description ?? undefined,
+        color: h.color,
+        icon: h.icon ?? undefined,
+        isArchived: h.is_archived,
+        createdAt: h.created_at,
+        updatedAt: h.updated_at,
+        sortOrder: h.sort_order,
+        schedule,
+        scheduledTime: h.scheduled_time ?? undefined,
+        tags: habitTags,
+        checklistItems: [],
+        todayStatus: "none" as const,
+      };
+    });
   },
 }));
