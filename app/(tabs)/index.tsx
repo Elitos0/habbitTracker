@@ -11,7 +11,9 @@ import {
     View,
 } from "react-native";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
 import DatePickerModal from "@/components/DatePickerModal";
+import HabitActionSheet from "@/components/HabitActionSheet";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Colors, FontSize, Radius, Spacing } from "@/constants/theme";
 import type { HabitWithDetails } from "@/src/domain/habits";
@@ -40,8 +42,15 @@ const FILTER_OPTIONS: { key: FilterMode; label: string }[] = [
 export default function HabitsScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const colors = Colors[colorScheme];
-  const { habits, isLoading, loadAll, toggleSimpleCompletion, toggleSubItem } =
-    useHabitsStore();
+  const {
+    habits,
+    isLoading,
+    loadAll,
+    toggleSimpleCompletion,
+    toggleSubItem,
+    archiveHabit,
+    deleteHabit,
+  } = useHabitsStore();
 
   const [filterMode, setFilterMode] = useState<FilterMode>("today");
   const [customDate, setCustomDate] = useState("");
@@ -49,6 +58,9 @@ export default function HabitsScreen() {
   const [rangeEnd, setRangeEnd] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [menuHabit, setMenuHabit] = useState<HabitWithDetails | null>(null);
+  const [confirmDeleteHabit, setConfirmDeleteHabit] =
+    useState<HabitWithDetails | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -123,6 +135,8 @@ export default function HabitsScreen() {
       <View>
         <Pressable
           onPress={() => router.push(`/habits/${item.id}`)}
+          onLongPress={() => setMenuHabit(item)}
+          delayLongPress={350}
           style={[
             styles.habitCard,
             {
@@ -402,6 +416,35 @@ export default function HabitsScreen() {
       >
         <FontAwesome name="plus" size={24} color="#fff" />
       </Pressable>
+
+      <HabitActionSheet
+        visible={menuHabit !== null}
+        habitTitle={menuHabit?.title ?? ""}
+        onArchive={() => {
+          if (menuHabit) archiveHabit(menuHabit.id);
+        }}
+        onDelete={() => {
+          if (menuHabit) setConfirmDeleteHabit(menuHabit);
+        }}
+        onClose={() => setMenuHabit(null)}
+      />
+
+      <ConfirmDialog
+        visible={confirmDeleteHabit !== null}
+        title="Удалить привычку?"
+        message={
+          confirmDeleteHabit
+            ? `«${confirmDeleteHabit.title}» и вся её история будут удалены без возможности восстановления.`
+            : undefined
+        }
+        confirmLabel="Удалить"
+        destructive
+        onConfirm={() => {
+          if (confirmDeleteHabit) deleteHabit(confirmDeleteHabit.id);
+          setConfirmDeleteHabit(null);
+        }}
+        onCancel={() => setConfirmDeleteHabit(null)}
+      />
 
       <DatePickerModal
         visible={showDatePicker}
