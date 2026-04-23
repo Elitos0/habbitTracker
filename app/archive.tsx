@@ -162,9 +162,16 @@ export default function ArchiveScreen() {
         }
         confirmLabel="Удалить"
         destructive
-        onConfirm={() => {
-          if (confirmDelete) handleDelete(confirmDelete.id);
+        onConfirm={async () => {
+          const target = confirmDelete;
           setConfirmDelete(null);
+          if (target) {
+            try {
+              await handleDelete(target.id);
+            } catch (err) {
+              console.warn("[archive:delete]", err);
+            }
+          }
         }}
         onCancel={() => setConfirmDelete(null)}
       />
@@ -198,7 +205,6 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radius.md,
     borderLeftWidth: 4,
-    marginBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   cardMain: { flex: 1, gap: Spacing.xs },
