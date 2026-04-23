@@ -37,6 +37,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "47b91b2a-bc9d-49be-ad1f-0a073a5761d1"
+      }
+    },
+    "owner": "elitos"
   }
 }
